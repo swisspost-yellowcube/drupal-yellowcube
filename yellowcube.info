@@ -1,6 +1,7 @@
 name = YellowCube
 description = Integration module for YellowCube.
 package = Commerce
+configure = admin/commerce/config/shipping/yellowcube
 dependencies[] = commerce
 dependencies[] = commerce_shipping
 core = 7.x
