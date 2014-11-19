@@ -1,0 +1,68 @@
+<?php
+/**
+ * @file
+ * YellowCube integration module for Drupal Commerce.
+ */
+
+define('YELLOWCUBE_OPERATING_MODE_PROD', 'P');
+define('YELLOWCUBE_OPERATING_MODE_TEST', 'T');
+
+
+/**
+ * Implements hook_menu().
+ */
+function yellowcube_menu() {
+  $items = array();
+
+  $items['admin/commerce/config/shipping/yellowcube'] = array(
+    'title' => 'YellowCube',
+    'description' => 'Configure YellowCube integration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yellowcube_admin_settings_form'),
+    'access arguments' => array('administer shipping'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 7,
+    'file' => 'includes/yellowcube.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_commerce_shipping_method_info().
+ */
+function yellowcube_commerce_shipping_method_info() {
+  return array(
+    'yellowcube' => array(
+      'title' => t('YellowCube'),
+      'description' => t('Configure shipping through YellowCube'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_commerce_shipping_service_info().
+ */
+function yellowcube_commerce_shipping_service_info() {
+  $services = array();
+
+  $services['yellowcube'] = array(
+    'title' => t('YellowCube'),
+    'display_title' => t('YellowCube'),
+    'description' => '',
+    'shipping_method' => 'yellowcube',
+    'callbacks' => array(
+      'rate' => 'yellowcube_service_rate_order',
+    ),
+  );
+
+  return $services;
+}
+
+/**
+ * Shipping service callback: returns the base rate for a flat rate service.
+ */
+function yellowcube_service_rate_order($shipping_service, $order) {
+  // TODO: Until it's determined what we do with shipping costs, we just give a random price.
+  return array();
+}
