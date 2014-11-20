@@ -1,0 +1,45 @@
+<?php
+/**
+ * @file
+ * Defines the database schema for the YellowCube module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function yellowcube_schema() {
+  $schema = array();
+
+  $schema['yellowcube_product_status'] = array(
+    'description' => 'Keeps track of YellowCube interaction for products',
+    'fields' => array(
+      'sku' => array(
+        'description' => 'The {commerce_product}.sku for the product.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'article_status' => array(
+        'description' => 'YellowCube status for the article',
+        'type' => 'varchar',
+        'length' => 25,
+        'not null' => TRUE,
+      ),
+      'updated' => array(
+        'description' => 'Unix timestamp for when the YellowCube data was last updated.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'foreign keys' => array(
+      'sku' => array(
+        'table' => 'commerce_product',
+        'columns' => array('sku' => 'sku'),
+      ),
+    ),
+    'primary key' => array('sku'),
+  );
+
+  return $schema;
+}
