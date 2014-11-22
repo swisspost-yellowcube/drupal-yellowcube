@@ -68,7 +68,11 @@ function yellowcube_schema() {
         'description' => 'Unix timestamp for when the YellowCube data was last updated.',
         'type' => 'int',
         'unsigned' => TRUE,
-        'not null' => TRUE,
+      ),
+      'queued' => array(
+        'description' => 'Timestamp for when the product was queued to be updated.',
+        'type' => 'int',
+        'unsigned' => TRUE,
       ),
     ),
     'foreign keys' => array(
