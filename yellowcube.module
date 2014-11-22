@@ -60,6 +60,65 @@ function yellowcube_commerce_shipping_service_info() {
 }
 
 /**
+ * Implements hook_cron().
+ */
+function yellowcube_cron() {
+  $queue = DrupalQueue::get('yellowcube_product_status');
+
+  // Select products that either have never been sent to YellowCube or have been
+  // changed since they were. Also include any products that were queued more
+  // than 6 hours ago, since their processing is then assumed to have failed.
+  $update_candidate = db_query("
+    SELECT cp.product_id, sku, cp.title, cp.type, cp.created, cp.changed,
+           yps.updated AS status_updated, yps.queued
+    FROM {commerce_product} AS cp
+    LEFT JOIN {yellowcube_product_status} AS yps USING (sku)
+    WHERE (yps.article_status = 'enqueued' AND yps.queued < :previous)
+          OR yps.article_status IS NULL OR yps.updated < cp.changed
+  ", array(':previous' => REQUEST_TIME - 6 * 3600));
+
+  foreach ($update_candidate as $up_cand) {
+    $queue->createItem($up_cand);
+
+    db_merge('yellowcube_product_status')
+      ->key(array('sku' => $up_cand->sku))
+      ->fields(array(
+        'article_status' => 'enqueued',
+        'queued' => REQUEST_TIME,
+      ))
+      ->execute();
+  }
+}
+
+/**
+ *  Implements hook_cron_queue_info().
+ */
+function yellowcube_cron_queue_info() {
+  return array(
+    'yellowcube_product_status' => array(
+      'worker callback' => 'yellowcube_cron_process_product_status',
+    ),
+  );
+}
+
+/**
+ * Worker callback for product status queue.
+ *
+ * @param stdClass $candidate
+ */
+function yellowcube_cron_process_product_status($candidate) {
+  // TODO: Send data to YellowCube here.
+  db_merge('yellowcube_product_status')
+    ->key(array('sku' => $candidate->sku))
+    ->fields(array(
+      'article_status' => 'updated',
+      'updated' => REQUEST_TIME,
+      'queued' => NULL,
+    ))
+    ->execute();
+}
+
+/**
  * Shipping service callback: returns the base rate for a flat rate service.
  */
 function yellowcube_service_rate_order($shipping_service, $order) {
