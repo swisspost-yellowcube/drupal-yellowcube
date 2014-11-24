@@ -78,7 +78,7 @@ function yellowcube_cron() {
   ", array(':previous' => REQUEST_TIME - 6 * 3600));
 
   foreach ($update_candidate as $up_cand) {
-    $queue->createItem($up_cand);
+    $queue->createItem($up_cand->sku);
 
     db_merge('yellowcube_product_status')
       ->key(array('sku' => $up_cand->sku))
@@ -104,12 +104,23 @@ function yellowcube_cron_queue_info() {
 /**
  * Worker callback for product status queue.
  *
- * @param stdClass $candidate
+ * @param string $sku
+ *   SKU for the product to be updated.
  */
-function yellowcube_cron_process_product_status($candidate) {
+function yellowcube_cron_process_product_status($sku) {
+  $status = db_query('SELECT * FROM {yellowcube_product_status} WHERE sku = :sku', array(
+    ':sku' => $sku,
+  ));
+
+  // If this update was already sent correctly, prevent it from being processed
+  // again, to save resources.
+  if (is_null($status->queued)) {
+    return;
+  }
+
   // TODO: Send data to YellowCube here.
   db_merge('yellowcube_product_status')
-    ->key(array('sku' => $candidate->sku))
+    ->key(array('sku' => $sku))
     ->fields(array(
       'article_status' => 'updated',
       'updated' => REQUEST_TIME,
