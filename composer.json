@@ -1,0 +1,25 @@
+{
+  "name": "drupal/yellowcube",
+  "description": "YellowCube module for Drupal.",
+  "license": "GPL2",
+  "minimum-stability": "dev",
+
+  "authors": [
+    {
+      "name": "Mikkel Hoegh",
+      "email": "mikkel@hoegh.org",
+      "role": "maintainer"
+    }
+  ],
+
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "git@github.com:liip/yellowcube-php.git"
+    }
+  ],
+
+  "require": {
+    "liip/yellowcube-php": "dev-master"
+  }
+}
