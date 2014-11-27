@@ -10,11 +10,24 @@
  */
 function yellowcube_admin_settings_form($form, &$form_state) {
 
-  $form['yellowcube_sender'] = array(
+  $form['yellowcube_depositor'] = array(
     '#type' => 'textfield',
-    '#title' => t('YellowCube depositor ID'),
+    '#title' => t('YellowCube depositor number'),
     '#description' => t('ID number assigned to your business by YellowCube.'),
-    '#default_value' => variable_get('yellowcube_sender', ''),
+    '#default_value' => variable_get('yellowcube_depositor', ''),
+  );
+
+  $form['yellowcube_partner'] = array(
+    '#type' => 'textfield',
+    '#title' => t('YellowCube partner number'),
+    '#description' => t('ID number assigned to your business by YellowCube.'),
+    '#default_value' => variable_get('yellowcube_partner', ''),
+  );
+
+  $form['yellowcube_plant'] = array(
+    '#type' => 'textfield',
+    '#title' => t('YellowCube plant ID'),
+    '#default_value' => variable_get('yellowcube_plant', ''),
   );
 
   $form['yellowcube_operating_mode'] = array(
