@@ -25,7 +25,8 @@ function yellowcube_rules_action_info() {
 /**
  * Implementation for yellowcube_send_order_action rules action.
  *
- * @param $order
+ * @param stdClass $order
+ *   Drupal Commerce order object to send to YellowCube.
  */
 function yellowcube_send_order_action($order) {
   // Only proceed if we have a shipping address.
@@ -42,53 +43,7 @@ function yellowcube_send_order_action($order) {
     return;
   }
 
-  // TODO: Move this to client.inc.
-  return;
-  $client = new YellowCube\Service(Config::testConfig());
-  $partner = new Partner();
-  $partner
-    ->setPartnerType('WE')
-    ->setPartnerNo('0000300020')
-    ->setPartnerReference('LiiP AG')
-    ->setTitle('')
-    ->setName1($ship_addr['name_line'])
-    ->setName2($ship_addr['premise'])
-    ->setStreet($ship_addr['thoroughfare'])
-    ->setCountryCode($ship_addr['country'])
-    ->setZIPCode($ship_addr['postal_code'])
-    ->setCity($ship_addr['locality'])
-    ->setPOBox('po box')
-    ->setPhoneNo('0041793020467')
-    ->setSMSAvisMobNo('0041793020467')
-    ->setFaxNo('0041793020467')
-    ->setEmail($order['mail'])
-    ->setLanguageCode('en');
+  module_load_include('client.inc', 'yellowcube');
 
-  $order = new Order();
-  $order
-    ->setOrderHeader(new OrderHeader('0000040730', \uniqid('yc'), date('Ymd')))
-    ->setPartnerAddress($partner)
-    ->addValueAddedService(new AdditionalShippingServices())
-    ->addValueAddedService(new BasicShippingServices(BasicShippingServices::PRI))
-    ->addValueAddedService(new DeliveryInstructions(''))
-    ->setOrderDocumentsFlag(true);
-
-  foreach ($order->commerce_line_items['und'] as $row) {
-    $line_item = commerce_line_item_load($row['line_item_id']);
-    $product = commerce_product_load($line_item->commerce_product['und'][0]['product_id']);
-
-    $position = new Position();
-    $position
-      ->setPosNo(10)
-      ->setArticleNo($product->sku)
-      ->setPlant('Y010')
-      ->setQuantity($line_item->quantity)
-      ->setQuantityISO('PCE')
-      ->setShortDescription($product->title_original);
-
-    $order->addOrderPosition($position);
-  }
-
-  $response = $client->createYCCustomerOrder($order);
-  assert($response->isSuccess(), 'Getting status for order failed.');
+  return yellowcube_client_add_order($ship_addr, $order);
 }
