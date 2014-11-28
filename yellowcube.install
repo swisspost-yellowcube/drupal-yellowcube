@@ -58,6 +58,12 @@ function yellowcube_schema() {
         'length' => 255,
         'not null' => TRUE,
       ),
+      'yc_reference' => array(
+        'description' => 'The YellowCube reference number for the product/article.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
       'article_status' => array(
         'description' => 'YellowCube status for the article',
         'type' => 'varchar',
@@ -82,6 +88,9 @@ function yellowcube_schema() {
       ),
     ),
     'primary key' => array('sku'),
+    'indexes' => array(
+      'yc_reference' => array('yc_reference'),
+    ),
   );
 
   return $schema;
