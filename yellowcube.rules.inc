@@ -16,6 +16,8 @@ function yellowcube_rules_action_info() {
         'order' => array(
           'type' => 'commerce_order',
           'label' => t('Order to send'),
+          // This action modifies the order status, so save it afterwards.
+          'save' => TRUE,
         ),
       ),
     ),
@@ -45,5 +47,12 @@ function yellowcube_send_order_action($order) {
 
   module_load_include('client.inc', 'yellowcube');
 
-  return yellowcube_client_add_order($ship_addr, $order);
+  $success = yellowcube_client_add_order($ship_addr, $order);
+
+  if ($success) {
+    commerce_order_status_update($order, 'yellowcube_recieved', TRUE);
+  }
+  else {
+    commerce_order_status_update($order, 'yellowcube_send_failed', TRUE);
+  }
 }

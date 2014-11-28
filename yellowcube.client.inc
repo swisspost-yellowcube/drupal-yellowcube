@@ -122,11 +122,15 @@ function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
       '@ref' => $response->getReference(),
       '@status' => $response->getStatusText(),
     ), WATCHDOG_NOTICE, $order_link);
+
+    return TRUE;
   }
   else {
     watchdog('yellowcube', 'Order #@num could not be transmitted to YellowCube: “@status”.', array(
       '@num' => $order->order_number,
       '@status' => $response->getStatusText(),
     ), WATCHDOG_ERROR, $order_link);
+
+    return FALSE;
   }
 }
