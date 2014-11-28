@@ -10,12 +10,32 @@ require 'vendor/autoload.php';
 use YellowCube\Art\Article;
 use YellowCube\Art\ChangeFlag;
 use YellowCube\Art\UnitsOfMeasure\ISO;
-use YellowCube\Config;
 use YellowCube\WAB\AdditionalService\BasicShippingServices;
 use YellowCube\WAB\Order;
 use YellowCube\WAB\OrderHeader;
 use YellowCube\WAB\Partner;
 use YellowCube\WAB\Position;
+
+/**
+ * Generate the config object for the YellowCube\Service object.
+ *
+ * @return \YellowCube\Config
+ */
+function yellowcube_client_get_config() {
+  // Use the testConfig constructor, since we don't want to specify the WSDL manually.
+  $config = YellowCube\Config::testConfig();
+
+  return $config;
+}
+
+/**
+ * Helper function to instantiate the yellowcube-php service object.
+ *
+ * @return YellowCube\Service
+ */
+function yellowcube_client_get_service() {
+  return new YellowCube\Service(yellowcube_client_get_config());
+}
 
 /**
  * Add a product to YellowCube.
@@ -38,8 +58,7 @@ function yellowcube_client_add_product($sku) {
     ->addArticleDescription($product->title, 'de')
   ;
 
-  $service = new YellowCube\Service(Config::testConfig());
-  $response = $service->insertArticleMasterData($article);
+  $response = yellowcube_client_get_service()->insertArticleMasterData($article);
 
   assert($response->isSuccess(), 'Inserting article failed.');
 }
@@ -53,7 +72,6 @@ function yellowcube_client_add_product($sku) {
  *   Drupal Commerce order object.
  */
 function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
-  $client = new YellowCube\Service(Config::testConfig());
   $partner = new Partner();
   $partner
     ->setPartnerType('WE')
@@ -91,7 +109,7 @@ function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
     $yc_order->addOrderPosition($position);
   }
 
-  $response = $client->createYCCustomerOrder($yc_order);
+  $response = yellowcube_client_get_service()->createYCCustomerOrder($yc_order);
 
   $order_link = l(t('view'), 'admin/commerce/orders/' . $order->order_number, array(
     'query' => array('destination' => 'admin/reports/dblog'),
