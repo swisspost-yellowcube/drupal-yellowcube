@@ -93,5 +93,33 @@ function yellowcube_schema() {
     ),
   );
 
+  $schema['yellowcube_order'] = array(
+    'description' => 'Keeps track of YellowCube order references for commerce_order records',
+    'fields' => array(
+      'order_id' => array(
+        'description' => 'The {commerce_order}.order_id for the order.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'yc_reference' => array(
+        'description' => 'The YellowCube reference number for the order.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('order_id'),
+    'foreign keys' => array(
+      'order_id' => array(
+        'table' => 'commerce_order',
+        'columns' => array('order_id' => 'order_id'),
+      ),
+    ),
+    'indexes' => array(
+      'yc_reference' => array('yc_reference'),
+    ),
+  );
+
   return $schema;
 }

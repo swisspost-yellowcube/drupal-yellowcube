@@ -126,6 +126,11 @@ function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
       '@status' => $response->getStatusText(),
     ), WATCHDOG_NOTICE, $order_link);
 
+    db_query('INSERT INTO {yellowcube_order} (order_id, yc_reference) VALUES (:id, :ref)', array(
+      ':id' => $order->order_id,
+      ':ref' => $response->getReference(),
+    ));
+
     return TRUE;
   }
   else {
