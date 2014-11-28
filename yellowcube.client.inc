@@ -49,8 +49,8 @@ function yellowcube_client_add_product($sku) {
   $article = new Article;
   $article
     ->setChangeFlag(ChangeFlag::INSERT)
-    ->setPlantID('Y012')
-    ->setDepositorNo('0000040750')
+    ->setPlantID(variable_get('yellowcube_plant', ''))
+    ->setDepositorNo(variable_get('yellowcube_depositor', ''))
     ->setArticleNo($product->sku)
     ->setBaseUOM(ISO::PCE)
     ->setNetWeight(0.042, ISO::KGM)
