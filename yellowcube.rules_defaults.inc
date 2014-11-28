@@ -30,5 +30,17 @@ function yellowcube_default_rules_configuration() {
       ]
     }
   }');
+  $items['rules_yellowcube_send_product_data'] = entity_import('rules_config', '{ "rules_yellowcube_send_product_data" : {
+      "LABEL" : "Send product data to YellowCube",
+      "PLUGIN" : "reaction rule",
+      "OWNER" : "rules",
+      "TAGS" : [ "yellowcube" ],
+      "REQUIRES" : [ "yellowcube", "entity" ],
+      "ON" : { "commerce_product_insert" : [], "commerce_product_update" : [] },
+      "DO" : [
+        { "yellowcube_update_product_action" : { "order" : [ "commerce-product" ] } }
+      ]
+    }
+  }');
   return $items;
 }

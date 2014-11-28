@@ -61,6 +61,9 @@ function yellowcube_commerce_shipping_service_info() {
 function yellowcube_cron() {
   $queue = DrupalQueue::get('yellowcube_product_status');
 
+  // TODO: Product insert is currently broken, disable it by returning here.
+  return;
+
   // Select products that either have never been sent to YellowCube or have been
   // changed since they were. Also include any products that were queued more
   // than 6 hours ago, since their processing is then assumed to have failed.

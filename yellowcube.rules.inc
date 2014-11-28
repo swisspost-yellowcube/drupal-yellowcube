@@ -9,6 +9,16 @@
  */
 function yellowcube_rules_action_info() {
   return array(
+    'yellowcube_update_product_action' => array(
+      'label' => t('Send product data to YellowCube'),
+      'group' => t('YellowCube'),
+      'parameter' => array(
+        'order' => array(
+          'type' => 'commerce_product',
+          'label' => t('Product to send'),
+        ),
+      ),
+    ),
     'yellowcube_send_order_action' => array(
       'label' => t('Send order to YellowCube'),
       'group' => t('YellowCube'),
@@ -22,6 +32,18 @@ function yellowcube_rules_action_info() {
       ),
     ),
   );
+}
+
+/**
+ * Implementation for yellowcube_update_product_action rules action.
+ *
+ * @param stdClass $product
+ *   Drupal Commerce product object to send to YellowCube.
+ */
+function yellowcube_update_product_action($product) {
+  module_load_include('client.inc', 'yellowcube');
+
+  yellowcube_client_update_product($product->sku);
 }
 
 /**

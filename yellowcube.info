@@ -10,4 +10,5 @@ dependencies[] = yellowcube
 configure = admin/commerce/config/shipping/yellowcube
 features[features_api][] = api:2
 features[rules_config][] = rules_yellowcube_send_orders
-mtime = 1417191203
+features[rules_config][] = rules_yellowcube_send_product_data
+mtime = 1417210820

@@ -38,17 +38,20 @@ function yellowcube_client_get_service() {
 }
 
 /**
- * Add a product to YellowCube.
+ * Send product data to YellowCube.
  *
  * @param string $sku
  *   SKU of the product to be added.
+ *
+ * @return bool
+ *   TRUE on success, FALSE on failure.
  */
-function yellowcube_client_add_product($sku) {
+function yellowcube_client_update_product($sku) {
   $product = commerce_product_load_by_sku($sku);
 
   $article = new Article;
   $article
-    ->setChangeFlag(ChangeFlag::INSERT)
+    ->setChangeFlag(ChangeFlag::UPDATE)
     ->setPlantID(variable_get('yellowcube_plant', ''))
     ->setDepositorNo(variable_get('yellowcube_depositor', ''))
     ->setArticleNo($product->sku)
@@ -60,7 +63,42 @@ function yellowcube_client_add_product($sku) {
 
   $response = yellowcube_client_get_service()->insertArticleMasterData($article);
 
-  assert($response->isSuccess(), 'Inserting article failed.');
+  // If we don't get a value in reference1, it means that the product is not
+  // yet registered. Change the flag to INSERT and try again.
+  if ($response->isSuccess() && !$response->getReference1()) {
+    $article->setChangeFlag(ChangeFlag::INSERT);
+    $response = yellowcube_client_get_service()->insertArticleMasterData($article);
+  }
+
+  $product_link = l(t('view'), 'admin/commerce/products/' . $product->product_id, array(
+    'query' => array('destination' => 'admin/reports/dblog'),
+  ));
+
+  if ($response->isSuccess()) {
+    watchdog('yellowcube', 'Product @sku was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.', array(
+      '@sku' => $response->getReference1(),
+      '@ref' => $response->getReference(),
+      '@status' => $response->getStatusText(),
+    ), WATCHDOG_NOTICE, $product_link);
+
+    drupal_set_message(t('Product @sku was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.', array(
+      '@sku' => $response->getReference1(),
+      '@ref' => $response->getReference(),
+      '@status' => $response->getStatusText(),
+    )));
+
+    // TODO: save reference ID to the database.
+
+    return TRUE;
+  }
+  else {
+    watchdog('yellowcube', 'Product @sku could not be transmitted to YellowCube: “@status”.', array(
+      '@sku' => $response->getReference1(),
+      '@status' => $response->getStatusText(),
+    ), WATCHDOG_ERROR, $product_link);
+
+    return FALSE;
+  }
 }
 
 /**
