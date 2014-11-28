@@ -115,7 +115,7 @@ function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
 
   $response = yellowcube_client_get_service()->createYCCustomerOrder($yc_order);
 
-  $order_link = l(t('view'), 'admin/commerce/orders/' . $order->order_number, array(
+  $order_link = l(t('view'), 'admin/commerce/orders/' . $order->order_id, array(
     'query' => array('destination' => 'admin/reports/dblog'),
   ));
 
