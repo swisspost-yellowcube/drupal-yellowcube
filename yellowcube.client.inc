@@ -92,7 +92,6 @@ function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
   }
 
   $response = $client->createYCCustomerOrder($yc_order);
-  assert($response->isSuccess(), 'Getting status for order failed.');
 
   $order_link = l(t('view'), 'admin/commerce/orders/' . $order->order_number, array(
     'query' => array('destination' => 'admin/reports/dblog'),
