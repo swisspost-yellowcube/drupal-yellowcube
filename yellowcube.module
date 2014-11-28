@@ -7,7 +7,6 @@
 define('YELLOWCUBE_OPERATING_MODE_PROD', 'P');
 define('YELLOWCUBE_OPERATING_MODE_TEST', 'T');
 
-
 /**
  * Implements hook_menu().
  */
@@ -99,6 +98,62 @@ function yellowcube_cron_queue_info() {
       'worker callback' => 'yellowcube_cron_process_product_status',
     ),
   );
+}
+
+/**
+ * Implements hook_commerce_order_state_info().
+ */
+function yellowcube_commerce_order_state_info() {
+  $order_states = array();
+
+  $order_states['yellowcube'] = array(
+    'name' => 'yellowcube',
+    'title' => t('YellowCube'),
+    'description' => t('Orders in this state are somewhere in the process of being handled by YellowCube.'),
+    'weight' => 7,
+    'default_status' => 'yellowcube_review',
+  );
+
+  return $order_states;
+}
+
+/**
+ * Implements hook_commerce_order_state_info().
+ */
+function yellowcube_commerce_order_status_info() {
+  $order_statuses = array();
+
+  $order_statuses['yellowcube_review'] = array(
+    'name' => 'yellowcube_review',
+    'title' => t('YellowCube: manual review'),
+    'state' => 'yellowcube',
+  );
+
+  $order_statuses['yellowcube_send'] = array(
+    'name' => 'yellowcube_send',
+    'title' => t('YellowCube: send to YellowCube'),
+    'state' => 'yellowcube',
+  );
+
+  $order_statuses['yellowcube_recieved'] = array(
+    'name' => 'yellowcube_recieved',
+    'title' => t('YellowCube: recieved by YellowCube'),
+    'state' => 'yellowcube',
+  );
+
+  $order_statuses['yellowcube_send_failed'] = array(
+    'name' => 'yellowcube_send_failed',
+    'title' => t('YellowCube: sending to YellowCube failed'),
+    'state' => 'yellowcube',
+  );
+
+  $order_statuses['yellowcube_delivered'] = array(
+    'name' => 'yellowcube_delivered',
+    'title' => t('YellowCube: delivered'),
+    'state' => 'yellowcube',
+  );
+
+  return $order_statuses;
 }
 
 /**
