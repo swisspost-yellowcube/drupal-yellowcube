@@ -132,9 +132,9 @@ function yellowcube_commerce_order_status_info() {
     'state' => 'yellowcube',
   );
 
-  $order_statuses['yellowcube_recieved'] = array(
-    'name' => 'yellowcube_recieved',
-    'title' => t('YellowCube: recieved by YellowCube'),
+  $order_statuses['yellowcube_received'] = array(
+    'name' => 'yellowcube_received',
+    'title' => t('YellowCube: received by YellowCube'),
     'state' => 'yellowcube',
   );
 

@@ -120,7 +120,7 @@ function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
   ));
 
   if ($response->isSuccess()) {
-    watchdog('yellowcube', 'Order #@num was successfully transmitted to YellowCube. Recieved reference number @ref and status message “@status”.', array(
+    watchdog('yellowcube', 'Order #@num was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.', array(
       '@num' => $order->order_number,
       '@ref' => $response->getReference(),
       '@status' => $response->getStatusText(),

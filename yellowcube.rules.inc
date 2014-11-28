@@ -50,7 +50,7 @@ function yellowcube_send_order_action($order) {
   $success = yellowcube_client_add_order($ship_addr, $order);
 
   if ($success) {
-    commerce_order_status_update($order, 'yellowcube_recieved', TRUE);
+    commerce_order_status_update($order, 'yellowcube_received', TRUE);
   }
   else {
     commerce_order_status_update($order, 'yellowcube_send_failed', TRUE);
