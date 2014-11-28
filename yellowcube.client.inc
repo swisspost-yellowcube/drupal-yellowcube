@@ -70,6 +70,9 @@ function yellowcube_client_add_product($sku) {
  *   Shipping address, in array format available on the customer profile.
  * @param stdClass $order
  *   Drupal Commerce order object.
+ *
+ * @return bool
+ *   TRUE on success, FALSE on failure.
  */
 function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
   $partner = new Partner();
