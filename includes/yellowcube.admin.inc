@@ -30,15 +30,11 @@ function yellowcube_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('yellowcube_plant', ''),
   );
 
-  $form['yellowcube_operating_mode'] = array(
-    '#type' => 'select',
-    '#title' => t('Operating mode'),
-    '#description' => t('Select operating mode, test or production.'),
-    '#options' => array(
-      YELLOWCUBE_OPERATING_MODE_TEST => t('Test'),
-      YELLOWCUBE_OPERATING_MODE_PROD => t('Production'),
-    ),
-    '#default_value' => variable_get('yellowcube_operating_mode', YELLOWCUBE_OPERATING_MODE_TEST),
+  $form['yellowcube_debug_mode'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Test mode'),
+    '#description' => t('If test mode is enabled, orders will get sent to the YellowCube test system. No actual goods will be sent.'),
+    '#default_value' => variable_get('yellowcube_debug_mode', TRUE),
   );
 
   return system_settings_form($form);

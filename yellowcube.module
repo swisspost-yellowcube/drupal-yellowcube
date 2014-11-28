@@ -4,9 +4,6 @@
  * YellowCube integration module for Drupal Commerce.
  */
 
-define('YELLOWCUBE_OPERATING_MODE_PROD', 'P');
-define('YELLOWCUBE_OPERATING_MODE_TEST', 'T');
-
 /**
  * Implements hook_menu().
  */
