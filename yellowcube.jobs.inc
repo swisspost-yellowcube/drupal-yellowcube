@@ -4,6 +4,30 @@
  * Cron tasks for the YellowCube module.
  */
 
+function yellowcube_jobs_fetch_order_updates() {
+  module_load_include('client.inc', 'yellowcube');
+
+  $service = yellowcube_client_get_service();
+
+  $issue_list = $service->getYCCustomerOrderStatus('');
+
+  foreach ($issue_list as $issue) {
+    $header = $issue->getCustomerOrderHeader();
+    echo "Order number: " . $header->getCustomerOrderNo() . PHP_EOL;
+    echo "PostalShipmentNo: " . $header->getPostalShipmentNo() . PHP_EOL;
+
+    foreach ($issue->getCustomerOrderList() as $item) {
+      echo "\tPosition: " . $item->getCustomerOrderPosNo();
+      echo ", ArticleNo: " . $item->getArticleNo();
+      echo PHP_EOL;
+    }
+  }
+
+  echo PHP_EOL . PHP_EOL;
+
+  print_r($issue_list);
+}
+
 /**
  * Cron callback for updating product status.
  */

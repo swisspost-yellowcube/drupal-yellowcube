@@ -63,6 +63,8 @@ function yellowcube_cron() {
 
   // TODO: Product insert is currently broken, so it is disabled.
   // yellowcube_jobs_update_products();
+
+  yellowcube_jobs_fetch_order_updates();
 }
 
 /**
