@@ -4,6 +4,9 @@
  * Cron tasks for the YellowCube module.
  */
 
+/**
+ * Cron job for creating order updates.
+ */
 function yellowcube_jobs_fetch_order_updates() {
   module_load_include('client.inc', 'yellowcube');
 
