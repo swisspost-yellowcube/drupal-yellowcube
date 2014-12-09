@@ -22,8 +22,24 @@ use YellowCube\WAB\Position;
  * @return \YellowCube\Config
  */
 function yellowcube_client_get_config() {
-  // Use the testConfig constructor, since we don't want to specify the WSDL manually.
-  $config = YellowCube\Config::testConfig();
+
+  $operation_mode = variable_get('yellowcube_mode', 'test');
+
+  switch($operation_mode) {
+    case 'prod':
+      //TODO
+      //Passing in a certificate
+      $config = YellowCube\Config::prodConfig();
+      break;
+
+    case 'int':
+      $config = YellowCube\Config::integrationConfig();
+      break;
+
+    default:
+      $config = YellowCube\Config::testConfig();
+
+  }
 
   return $config;
 }
@@ -51,15 +67,63 @@ function yellowcube_client_update_product($sku) {
 
   $article = new Article;
   $article
-    ->setChangeFlag(ChangeFlag::UPDATE)
+    ->setChangeFlag(ChangeFlag::INSERT)
     ->setPlantID(variable_get('yellowcube_plant', ''))
     ->setDepositorNo(variable_get('yellowcube_depositor', ''))
     ->setArticleNo($product->sku)
     ->setBaseUOM(ISO::PCE)
-    ->setNetWeight(0.042, ISO::KGM)
     ->setAlternateUnitISO(ISO::PCE)
-    ->addArticleDescription($product->title, 'de')
-  ;
+    ->addArticleDescription($product->title, 'de');
+
+  //Enable / Disable product based on the status
+  switch ($product->status) {
+    case FALSE:
+      $article->setChangeFlag(ChangeFlag::DEACTIVATE);
+      break;
+
+    default:
+      $article->setChangeFlag(ChangeFlag::INSERT);
+  }
+
+  //Setting the weight
+  if(!empty($product->field_weight['und'][0]['weight'])) {
+    $weight_unit = $product->field_weight['und'][0]['unit'];
+
+    switch($weight_unit) {
+      case 'kg':
+        $weight_unit_iso = ISO::KGM;
+        break;
+      case 'g':
+        $weight_unit_iso = ISO::GRM;
+        break;
+      default:
+        $weight_unit_iso = ISO::KGM;
+    }
+
+    $article ->setNetWeight(round($product->field_weight['und'][0]['weight'], 3), $weight_unit_iso);
+  }
+
+  //Setting the dimensions
+  if(!empty($product->field_dimensions['und'][0]['unit'])) {
+    $dimension_unit = $product->field_dimensions['und'][0]['unit'];
+
+    switch($dimension_unit) {
+      case 'm':
+        $dimension_unit = ISO::MTR;
+        break;
+      case 'cm':
+        $dimension_unit = ISO::CMT;
+        break;
+      default:
+        $dimension_unit = ISO::MTR;
+    }
+
+    $article ->setNetWeight(round($product->field_dimensions['und'][0]['length'], 3), $dimension_unit);
+    $article ->setNetWeight(round($product->field_dimensions['und'][0]['width'], 3), $dimension_unit);
+    $article ->setNetWeight(round($product->field_dimensions['und'][0]['height'], 3), $dimension_unit);
+
+  }
+
 
   $response = yellowcube_client_get_service()->insertArticleMasterData($article);
 
@@ -178,5 +242,53 @@ function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
     ), WATCHDOG_ERROR, $order_link);
 
     return FALSE;
+  }
+}
+
+function yellowcube_client_get_inventory_data() {
+
+  $service = yellowcube_client_get_service();
+
+  //Get all stock items from yellowcube
+  $current_stock = $service->getInventory();
+
+  foreach ($current_stock as $stock_item) {
+    $article_no = $stock_item->getArticleNo();
+
+    //unfortunately, not all stock items have an article number
+    if (!empty($article_no)) {
+
+      //We try to find the according product in our shop
+      $product = commerce_product_load_by_sku($article_no);
+
+      if ($product) {
+        yellowcube_client_stock_adjust($product, $stock_item->getQuantityUOM());
+      }
+    }
+  }
+}
+
+function yellowcube_client_send_inventory_data() {
+  $products = entity_load('commerce_product');
+
+  foreach ($products as $product) {
+    yellowcube_client_update_product($product->sku);
+  }
+}
+
+/**
+ * Set a particular product SKU to a fixed stock value.
+ */
+function yellowcube_client_stock_adjust($product, $new_stock) {
+  if (!commerce_ss_product_type_enabled($product->type)) {
+    return;
+  }
+
+  $wrapper = entity_metadata_wrapper('commerce_product', $product);
+  $wrapper->commerce_stock->set($new_stock);
+  $result = $wrapper->save();
+
+  if ($result) {
+    watchdog('commerce_stock', 'Modified stock level of product %sku to %amount', array('%sku' => $product->sku, '%amount' => $new_stock));
   }
 }
