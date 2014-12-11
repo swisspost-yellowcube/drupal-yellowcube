@@ -21,9 +21,9 @@ function yellowcube_menu() {
     'file' => 'includes/yellowcube.admin.inc',
   );
 
-  $items['admin/commerce/products/yellowcube'] = array(
-    'title' => 'YellowCube Inventory',
-    'description' => 'YellowCube Inventory Management',
+  $items['admin/commerce/config/yellowcube_stock'] = array(
+    'title' => 'YellowCube stock management',
+    'description' => 'YellowCube stock management',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('yellowcube_inventory_form'),
     'access arguments' => array('administer commerce_product entities'),
@@ -172,3 +172,80 @@ function yellowcube_service_rate_order($shipping_service, $order) {
   // TODO: Until it's determined what we do with shipping costs, we just give a random price.
   return array();
 }
+
+/**
+ * Product transmission batch definition
+ */
+function yellowcube_batch_send_data() {
+
+  $product_count = db_query("SELECT COUNT(DISTINCT product_id) FROM {commerce_product} WHERE (type = 'yellowcube_demo_product')")->fetchField();
+
+  $products = db_select('commerce_product', 'cp')
+    ->fields('cp', array('product_id', 'sku'))
+    ->orderBy('cp.product_id', 'ASC')
+    ->where('type = :type', array(':type' => 'yellowcube_demo_product'))
+    ->execute();
+
+  // Give helpful information about how many products are being operated on.
+  drupal_set_message(
+    t('There are @product_count products to be transferred.',
+      array(
+        '@product_count' => $product_count,
+      )
+    )
+  );
+
+  $operations = array();
+  foreach($products as $product) {
+    $operations[] = array(
+      'yellowcube_batch_operation_send_product', array($product),
+    );
+  }
+  $batch = array(
+    'operations' => $operations,
+    'finished' => 'yellowcube_batch_send_data_finished',
+    'title' => t('Processing product data submission'),
+    'init_message' => t('Product submission started.'),
+    'progress_message' => t('Processed @current out of @total.'),
+    'error_message' => t('Product submission has encountered an error.'),
+    'file' => 'includes/yellowcube.admin.inc',
+  );
+  return $batch;
+}
+
+/**
+ *  Batch operation for sending data
+ */
+function yellowcube_batch_operation_send_product($current_product, &$context) {
+  module_load_include('client.inc', 'yellowcube');
+
+  //load the product and send it to yellowcube
+  $product = commerce_product_load($current_product->product_id, NULL, TRUE);
+  yellowcube_client_update_product($product->sku);
+  $context['results'][] = $product->sku . ' : ' . check_plain($product->title);
+  $context['sandbox']['progress']++;
+  $context['message'] = t('Now processing %product: %sku', array('%product' => check_plain($product->title), '%sku' => $product->sku));
+}
+
+/**
+ * Batch 'finished' callback used for sending data
+ */
+function yellowcube_batch_send_data_finished($success, $results, $operations) {
+  if ($success) {
+    drupal_set_message(t('The product data submission to YellowCube was successfully completed'));
+  }
+  else {
+    // An error occurred.
+    // $operations contains the operations that remained unprocessed.
+    $error_operation = reset($operations);
+    drupal_set_message(
+      t('An error occurred while processing @operation with arguments : @args',
+        array(
+          '@operation' => $error_operation[0],
+          '@args' => print_r($error_operation[0], TRUE),
+        )
+      )
+    );
+  }
+}
+

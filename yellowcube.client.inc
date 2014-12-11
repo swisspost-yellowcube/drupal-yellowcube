@@ -100,7 +100,7 @@ function yellowcube_client_update_product($sku) {
         $weight_unit_iso = ISO::KGM;
     }
 
-    $article ->setNetWeight(round($product->field_weight['und'][0]['weight'], 3), $weight_unit_iso);
+    $article->setNetWeight(round($product->field_weight['und'][0]['weight'], 3), $weight_unit_iso);
   }
 
   //Setting the dimensions
@@ -118,9 +118,9 @@ function yellowcube_client_update_product($sku) {
         $dimension_unit = ISO::MTR;
     }
 
-    $article ->setLength(round($product->field_dimensions['und'][0]['length'], 3), $dimension_unit);
-    $article ->setWidth(round($product->field_dimensions['und'][0]['width'], 3), $dimension_unit);
-    $article ->setHeight(round($product->field_dimensions['und'][0]['height'], 3), $dimension_unit);
+    $article->setLength(round($product->field_dimensions['und'][0]['length'], 3), $dimension_unit);
+    $article->setWidth(round($product->field_dimensions['und'][0]['width'], 3), $dimension_unit);
+    $article->setHeight(round($product->field_dimensions['und'][0]['height'], 3), $dimension_unit);
 
   }
 

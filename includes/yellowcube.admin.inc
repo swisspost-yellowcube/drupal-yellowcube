@@ -10,6 +10,12 @@
  */
 function yellowcube_admin_settings_form($form, &$form_state) {
 
+  $form['logo'] = array(
+    '#prefix' => '<div>',
+    '#markup' => theme_image(array('path' => drupal_get_path('module', 'yellowcube') . '/img/logo.jpg', 'attributes' => array())),
+    '#suffix' => '</div>',
+  );
+
   $form['yellowcube_depositor'] = array(
     '#type' => 'textfield',
     '#title' => t('YellowCube depositor number'),
@@ -52,10 +58,16 @@ function yellowcube_inventory_form($form, &$form_state) {
 
   drupal_set_title(t('YellowCube inventory management'));
 
+  $form['logo'] = array(
+    '#prefix' => '<div>',
+    '#markup' => theme_image(array('path' => drupal_get_path('module', 'yellowcube') . '/img/logo.jpg', 'attributes' => array())),
+    '#suffix' => '</div>',
+  );
+
 
   $form['send_data'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Send product data'),
+    '#title' => t('Send product data (ART)'),
     '#weight' => 5,
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
@@ -63,7 +75,7 @@ function yellowcube_inventory_form($form, &$form_state) {
 
   $form['send_data']['description'] = array(
     '#prefix' => '<div>',
-    '#markup' => t('With this button, you can send all you product information to yellow cube.'),
+    '#markup' => t('With this button, you can send all your product data to YellowCube. Make sure, you include all dimensions and weights in your product data.'),
     '#suffix' => '</div>',
   );
 
@@ -76,7 +88,7 @@ function yellowcube_inventory_form($form, &$form_state) {
 
   $form['fetch_data'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Fetch product data'),
+    '#title' => t('Fetch product data (BAR)'),
     '#weight' => 6,
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
@@ -108,8 +120,9 @@ function yellowcube_inventory_form_submit($form, &$form_state) {
   }
 
   if($form_state['clicked_button']['#name'] == 'send_data') {
-    yellowcube_client_send_inventory_data();
+    //create a batch operation
+    $batch = yellowcube_batch_send_data();
+    batch_set($batch);
   }
 
 }
-
