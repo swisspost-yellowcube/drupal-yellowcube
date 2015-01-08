@@ -25,10 +25,10 @@ function yellowcube_client_get_config() {
 
   $operation_mode = variable_get('yellowcube_mode', 'test');
 
-  switch($operation_mode) {
+  $cert_path = variable_get('yellowcube_certificate', '');
+
+  switch ($operation_mode) {
     case 'prod':
-      //TODO
-      //Passing in a certificate
       $config = YellowCube\Config::prodConfig();
       break;
 
@@ -38,6 +38,15 @@ function yellowcube_client_get_config() {
 
     default:
       $config = YellowCube\Config::testConfig();
+  }
+
+  //Certificate handling
+  if(in_array($operation_mode, array('prod', 'int'))) {
+
+    if (!empty($cert_path) && file_exists($cert_path)) {
+      $config->setCertificateFilePath($cert_path);
+      //Todo: handle password
+    }
 
   }
 
@@ -86,10 +95,10 @@ function yellowcube_client_update_product($sku) {
   }
 
   //Setting the weight
-  if(!empty($product->field_weight['und'][0]['weight'])) {
+  if (!empty($product->field_weight['und'][0]['weight'])) {
     $weight_unit = $product->field_weight['und'][0]['unit'];
 
-    switch($weight_unit) {
+    switch ($weight_unit) {
       case 'kg':
         $weight_unit_iso = ISO::KGM;
         break;
@@ -104,10 +113,10 @@ function yellowcube_client_update_product($sku) {
   }
 
   //Setting the dimensions
-  if(!empty($product->field_dimensions['und'][0]['unit'])) {
+  if (!empty($product->field_dimensions['und'][0]['unit'])) {
     $dimension_unit = $product->field_dimensions['und'][0]['unit'];
 
-    switch($dimension_unit) {
+    switch ($dimension_unit) {
       case 'm':
         $dimension_unit = ISO::MTR;
         break;
@@ -134,32 +143,53 @@ function yellowcube_client_update_product($sku) {
     $response = yellowcube_client_get_service()->insertArticleMasterData($article);
   }
 
-  $product_link = l(t('view'), 'admin/commerce/products/' . $product->product_id, array(
-    'query' => array('destination' => 'admin/reports/dblog'),
-  ));
+  $product_link = l(
+    t('view'),
+    'admin/commerce/products/' . $product->product_id,
+    array(
+      'query' => array('destination' => 'admin/reports/dblog'),
+    )
+  );
 
   if ($response->isSuccess()) {
-    watchdog('yellowcube', 'Product @sku was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.', array(
-      '@sku' => $response->getReference1(),
-      '@ref' => $response->getReference(),
-      '@status' => $response->getStatusText(),
-    ), WATCHDOG_NOTICE, $product_link);
+    watchdog(
+      'yellowcube',
+      'Product @sku was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.',
+      array(
+        '@sku' => $response->getReference1(),
+        '@ref' => $response->getReference(),
+        '@status' => $response->getStatusText(),
+      ),
+      WATCHDOG_NOTICE,
+      $product_link
+    );
 
-    drupal_set_message(t('Product @sku was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.', array(
-      '@sku' => $response->getReference1(),
-      '@ref' => $response->getReference(),
-      '@status' => $response->getStatusText(),
-    )));
+    drupal_set_message(
+      t(
+        'Product @sku was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.',
+        array(
+          '@sku' => $response->getReference1(),
+          '@ref' => $response->getReference(),
+          '@status' => $response->getStatusText(),
+        )
+      )
+    );
 
     // TODO: save reference ID to the database.
 
     return TRUE;
   }
   else {
-    watchdog('yellowcube', 'Product @sku could not be transmitted to YellowCube: “@status”.', array(
-      '@sku' => $response->getReference1(),
-      '@status' => $response->getStatusText(),
-    ), WATCHDOG_ERROR, $product_link);
+    watchdog(
+      'yellowcube',
+      'Product @sku could not be transmitted to YellowCube: “@status”.',
+      array(
+        '@sku' => $response->getReference1(),
+        '@status' => $response->getStatusText(),
+      ),
+      WATCHDOG_ERROR,
+      $product_link
+    );
 
     return FALSE;
   }
@@ -217,78 +247,49 @@ function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
 
   $response = yellowcube_client_get_service()->createYCCustomerOrder($yc_order);
 
-  $order_link = l(t('view'), 'admin/commerce/orders/' . $order->order_id, array(
-    'query' => array('destination' => 'admin/reports/dblog'),
-  ));
+  $order_link = l(
+    t('view'),
+    'admin/commerce/orders/' . $order->order_id,
+    array(
+      'query' => array('destination' => 'admin/reports/dblog'),
+    )
+  );
 
   if ($response->isSuccess()) {
-    watchdog('yellowcube', 'Order #@num was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.', array(
-      '@num' => $order->order_number,
-      '@ref' => $response->getReference(),
-      '@status' => $response->getStatusText(),
-    ), WATCHDOG_NOTICE, $order_link);
+    watchdog(
+      'yellowcube',
+      'Order #@num was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.',
+      array(
+        '@num' => $order->order_number,
+        '@ref' => $response->getReference(),
+        '@status' => $response->getStatusText(),
+      ),
+      WATCHDOG_NOTICE,
+      $order_link
+    );
 
-    db_query('INSERT INTO {yellowcube_order} (order_id, yc_reference) VALUES (:id, :ref)', array(
-      ':id' => $order->order_id,
-      ':ref' => $response->getReference(),
-    ));
+    db_query(
+      'INSERT INTO {yellowcube_order} (order_id, yc_reference) VALUES (:id, :ref)',
+      array(
+        ':id' => $order->order_id,
+        ':ref' => $response->getReference(),
+      )
+    );
 
     return TRUE;
   }
   else {
-    watchdog('yellowcube', 'Order #@num could not be transmitted to YellowCube: “@status”.', array(
-      '@num' => $order->order_number,
-      '@status' => $response->getStatusText(),
-    ), WATCHDOG_ERROR, $order_link);
+    watchdog(
+      'yellowcube',
+      'Order #@num could not be transmitted to YellowCube: “@status”.',
+      array(
+        '@num' => $order->order_number,
+        '@status' => $response->getStatusText(),
+      ),
+      WATCHDOG_ERROR,
+      $order_link
+    );
 
     return FALSE;
-  }
-}
-
-function yellowcube_client_get_inventory_data() {
-
-  $service = yellowcube_client_get_service();
-
-  //Get all stock items from yellowcube
-  $current_stock = $service->getInventory();
-
-  foreach ($current_stock as $stock_item) {
-    $article_no = $stock_item->getArticleNo();
-
-    //unfortunately, not all stock items have an article number
-    if (!empty($article_no)) {
-
-      //We try to find the according product in our shop
-      $product = commerce_product_load_by_sku($article_no);
-
-      if ($product) {
-        yellowcube_client_stock_adjust($product, $stock_item->getQuantityUOM());
-      }
-    }
-  }
-}
-
-function yellowcube_client_send_inventory_data() {
-  $products = entity_load('commerce_product');
-
-  foreach ($products as $product) {
-    yellowcube_client_update_product($product->sku);
-  }
-}
-
-/**
- * Set a particular product SKU to a fixed stock value.
- */
-function yellowcube_client_stock_adjust($product, $new_stock) {
-  if (!commerce_ss_product_type_enabled($product->type)) {
-    return;
-  }
-
-  $wrapper = entity_metadata_wrapper('commerce_product', $product);
-  $wrapper->commerce_stock->set($new_stock);
-  $result = $wrapper->save();
-
-  if ($result) {
-    watchdog('commerce_stock', 'Modified stock level of product %sku to %amount', array('%sku' => $product->sku, '%amount' => $new_stock));
   }
 }

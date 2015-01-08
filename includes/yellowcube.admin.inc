@@ -36,6 +36,20 @@ function yellowcube_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('yellowcube_plant', ''),
   );
 
+  $form['yellowcube_certificate'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Path to certificate'),
+    '#description' => t('For security reasons, the certificate should be placed outside of the webroot.'),
+    '#default_value' => variable_get('yellowcube_certificate', ''),
+  );
+
+  $form['yellowcube_password'] = array(
+    '#type' => 'password',
+    '#title' => t('Certificate password'),
+    '#description' => t('Password phrase used together with the certificate.'),
+    '#default_value' => variable_get('yellowcube_password', ''),
+  );
+
   $form['yellowcube_mode'] = array(
     '#type' => 'select',
     '#title' => t('Operating mode'),
@@ -67,7 +81,7 @@ function yellowcube_inventory_form($form, &$form_state) {
 
   $form['send_data'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Send product data (ART)'),
+    '#title' => t('Send product data including physical dimensions (ART)'),
     '#weight' => 5,
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
@@ -88,7 +102,7 @@ function yellowcube_inventory_form($form, &$form_state) {
 
   $form['fetch_data'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Fetch product data (BAR)'),
+    '#title' => t('Fetch product stock level data (BAR)'),
     '#weight' => 6,
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
@@ -115,11 +129,12 @@ function yellowcube_inventory_form($form, &$form_state) {
 function yellowcube_inventory_form_submit($form, &$form_state) {
   module_load_include('client.inc', 'yellowcube');
 
-  if($form_state['clicked_button']['#name'] == 'fetch_data') {
-    yellowcube_client_get_inventory_data();
+  if ($form_state['clicked_button']['#name'] == 'fetch_data') {
+    $batch = yellowcube_batch_fetch_inventory_data();
+    batch_set($batch);
   }
 
-  if($form_state['clicked_button']['#name'] == 'send_data') {
+  if ($form_state['clicked_button']['#name'] == 'send_data') {
     //create a batch operation
     $batch = yellowcube_batch_send_data();
     batch_set($batch);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * YellowCube integration module for Drupal Commerce.
@@ -76,21 +77,7 @@ function yellowcube_commerce_shipping_service_info() {
 function yellowcube_cron() {
   module_load_include('jobs.inc', 'yellowcube');
 
-  // TODO: Product insert is currently broken, so it is disabled.
-  // yellowcube_jobs_update_products();
-
   yellowcube_jobs_fetch_order_updates();
-}
-
-/**
- *  Implements hook_cron_queue_info().
- */
-function yellowcube_cron_queue_info() {
-  return array(
-    'yellowcube_product_status' => array(
-      'worker callback' => 'yellowcube_cron_process_product_status',
-    ),
-  );
 }
 
 /**
@@ -138,43 +125,14 @@ function yellowcube_commerce_order_status_info() {
 }
 
 /**
- * Worker callback for product status queue.
- *
- * @param string $sku
- *   SKU for the product to be updated.
- */
-function yellowcube_cron_process_product_status($sku) {
-  $status = db_query('SELECT * FROM {yellowcube_product_status} WHERE sku = :sku', array(
-    ':sku' => $sku,
-  ));
-
-  // If this update was already sent correctly, prevent it from being processed
-  // again, to save resources.
-  if (is_null($status->queued)) {
-    return;
-  }
-
-  // TODO: Send data to YellowCube here.
-  db_merge('yellowcube_product_status')
-    ->key(array('sku' => $sku))
-    ->fields(array(
-      'article_status' => 'updated',
-      'updated' => REQUEST_TIME,
-      'queued' => NULL,
-    ))
-    ->execute();
-}
-
-/**
  * Shipping service callback: returns the base rate for a flat rate service.
  */
 function yellowcube_service_rate_order($shipping_service, $order) {
-  // TODO: Until it's determined what we do with shipping costs, we just give a random price.
   return array();
 }
 
 /**
- * Product transmission batch definition
+ * Product data transmission batch definition: ART
  */
 function yellowcube_batch_send_data() {
 
@@ -214,7 +172,7 @@ function yellowcube_batch_send_data() {
 }
 
 /**
- *  Batch operation for sending data
+ *  Batch operation for sending data ART
  */
 function yellowcube_batch_operation_send_product($current_product, &$context) {
   module_load_include('client.inc', 'yellowcube');
@@ -249,3 +207,101 @@ function yellowcube_batch_send_data_finished($success, $results, $operations) {
   }
 }
 
+
+/**
+ * Product data transmission batch definition: ART
+ */
+function yellowcube_batch_fetch_inventory_data() {
+  $service = yellowcube_client_get_service();
+
+  //Get all stock items from yellowcube
+  $stock_items = $service->getInventory();
+
+  $product_count = count($stock_items);
+
+  // Give helpful information about how many products are being operated on.
+  drupal_set_message(
+    t('YellowCube reports @product_count products with a stock level.',
+      array(
+        '@product_count' => $product_count,
+      )
+    )
+  );
+
+  $operations = array();
+  foreach($stock_items as $product){
+    $operations[] = array(
+      'yellowcube_batch_operation_update_stock', array(
+        array('art-no' => $product->getArticleNo(), 'qty' => $product->getQuantityUOM()->get())),
+    );
+  }
+  $batch = array(
+    'operations' => $operations,
+    'finished' => 'yellowcube_batch_fetch_inventory_finished',
+    'title' => t('Processing product data submission'),
+    'init_message' => t('Product submission started.'),
+    'progress_message' => t('Processed @current out of @total.'),
+    'error_message' => t('Product submission has encountered an error.'),
+    'file' => 'includes/yellowcube.admin.inc',
+  );
+  return $batch;
+}
+
+/**
+ *  Batch operation for sending data ART
+ */
+function yellowcube_batch_operation_update_stock($stock_item, &$context) {
+  $article_no = $stock_item['art-no'];
+
+  //unfortunately, not all stock items have an article number
+  if (!empty($article_no)) {
+
+    //We try to find the according product in our shop
+    $product = commerce_product_load_by_sku($article_no);
+
+    if ($product) {
+      yellowcube_stock_adjust($product, $stock_item['qty']);
+    }
+  }
+
+}
+
+/**
+ * Set a particular product SKU to a fixed stock value.
+ */
+function yellowcube_stock_adjust($product, $new_stock) {
+  if (!commerce_ss_product_type_enabled($product->type)) {
+    return;
+  }
+
+  $wrapper = entity_metadata_wrapper('commerce_product', $product);
+  $wrapper->commerce_stock->set($new_stock);
+  $result = $wrapper->save();
+
+  if ($result) {
+    watchdog('commerce_stock', 'Modified stock level of product %sku to %amount', array('%sku' => $product->sku, '%amount' => $new_stock));
+  }
+}
+
+
+/**
+ * Batch 'finished' callback used for sending data
+ */
+function yellowcube_batch_fetch_inventory_finished($success, $results, $operations) {
+  if ($success) {
+    drupal_set_message(t('The stock update was successful'));
+  }
+  else {
+    // An error occurred.
+    // $operations contains the operations that remained unprocessed.
+    $error_operation = reset($operations);
+    drupal_set_message(
+      t('An error occurred while processing @operation with arguments : @args',
+        array(
+          '@operation' => $error_operation[0],
+          '@args' => print_r($error_operation[0], TRUE),
+        )
+      )
+    );
+  }
+}
