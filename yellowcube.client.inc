@@ -27,27 +27,19 @@ function yellowcube_client_get_config() {
 
   $cert_path = variable_get('yellowcube_certificate', '');
 
-  switch ($operation_mode) {
-    case 'prod':
-      $config = YellowCube\Config::prodConfig();
-      break;
-
-    case 'int':
-      $config = YellowCube\Config::integrationConfig();
-      break;
-
-    default:
-      $config = YellowCube\Config::testConfig();
-  }
+  $config = new YellowCube\Config(
+    variable_get('yellowcube_sender', ''),
+    variable_get('yellowcube_endpoint', ''),
+    null,
+    variable_get('yellowcube_mode', 'T')
+  );
 
   //Certificate handling
-  if(in_array($operation_mode, array('prod', 'int'))) {
-
+  if(in_array($operation_mode, array('P', 'D'))) {
     if (!empty($cert_path) && file_exists($cert_path)) {
       $config->setCertificateFilePath($cert_path);
       //Todo: handle password
     }
-
   }
 
   return $config;
@@ -211,7 +203,7 @@ function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
   $partner
     ->setPartnerType('WE')
     ->setPartnerNo(variable_get('yellowcube_partner', ''))
-    ->setPartnerReference('LiiP AG')
+    ->setPartnerReference('Liip AG')
     ->setName1($ship_addr['name_line'])
     ->setName2($ship_addr['premise'])
     ->setStreet($ship_addr['thoroughfare'])
@@ -227,22 +219,25 @@ function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
     ->setPartnerAddress($partner)
     ->addValueAddedService(new BasicShippingServices(BasicShippingServices::ECO))
     // XXX: Must be true to work around bug #41: https://trello.com/c/E3hmOIzl
-    ->setOrderDocumentsFlag(TRUE);
+    ->setOrderDocumentsFlag(FALSE);
 
   foreach ($order->commerce_line_items['und'] as $key => $row) {
     $line_item = commerce_line_item_load($row['line_item_id']);
-    $product = commerce_product_load($line_item->commerce_product['und'][0]['product_id']);
 
-    $position = new Position();
-    $position
-      ->setPosNo($key + 1)
-      ->setArticleNo($product->sku)
-      ->setPlant(variable_get('yellowcube_plant', ''))
-      ->setQuantity($line_item->quantity)
-      ->setQuantityISO('PCE')
-      ->setShortDescription($product->title_original);
+    //Only submit products and skip shipping cost line item
+    if (!empty($line_item->commerce_product['und'][0]['product_id'])){
+      $product = commerce_product_load($line_item->commerce_product['und'][0]['product_id']);
+      $position = new Position();
+      $position
+        ->setPosNo($key + 1)
+        ->setArticleNo($product->sku)
+        ->setPlant(variable_get('yellowcube_plant', ''))
+        ->setQuantity($line_item->quantity)
+        ->setQuantityISO('PCE')
+        ->setShortDescription($product->title_original);
 
-    $yc_order->addOrderPosition($position);
+      $yc_order->addOrderPosition($position);
+    }
   }
 
   $response = yellowcube_client_get_service()->createYCCustomerOrder($yc_order);

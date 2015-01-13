@@ -16,6 +16,13 @@ function yellowcube_admin_settings_form($form, &$form_state) {
     '#suffix' => '</div>',
   );
 
+  $form['yellowcube_sender'] = array(
+    '#type' => 'textfield',
+    '#title' => t('YellowCube sender'),
+    '#description' => t('Your YellowCube Shop ID number.'),
+    '#default_value' => variable_get('yellowcube_sender', ''),
+  );
+
   $form['yellowcube_depositor'] = array(
     '#type' => 'textfield',
     '#title' => t('YellowCube depositor number'),
@@ -54,12 +61,19 @@ function yellowcube_admin_settings_form($form, &$form_state) {
     '#type' => 'select',
     '#title' => t('Operating mode'),
     '#options' => array(
-      'prod' => t('Production'),
-      'int' => t('Integration'),
-      'test' => t('Test'),
+      'P' => t('Production'),
+      'D' => t('Integration'),
+      'T' => t('Test'),
     ),
-    '#default_value' => variable_get('yellowcube_mode', 'test'),
+    '#default_value' => variable_get('yellowcube_mode', 'T'),
     '#description' => t('If test mode is enabled, orders will get sent to the YellowCube test system. No actual goods will be sent.'),
+  );
+
+  $form['yellowcube_endpoint'] = array(
+    '#type' => 'textfield',
+    '#title' => t('URL to the Endpoint'),
+    '#description' => t('YellowCube SOAP EntryPoint'),
+    '#default_value' => variable_get('yellowcube_endpoint', ''),
   );
 
   return system_settings_form($form);

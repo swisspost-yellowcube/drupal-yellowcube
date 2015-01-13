@@ -43,7 +43,11 @@ function yellowcube_rules_action_info() {
 function yellowcube_update_product_action($product) {
   module_load_include('client.inc', 'yellowcube');
 
-  yellowcube_client_update_product($product->sku);
+  //Skip hook in batch mode and checkout for performance reasons
+  $current_batch = batch_get();
+  if (empty($current_batch) && arg(0) !== 'checkout') {
+    yellowcube_client_update_product($product->sku);
+  }
 }
 
 /**

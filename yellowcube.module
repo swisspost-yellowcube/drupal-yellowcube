@@ -207,7 +207,6 @@ function yellowcube_batch_send_data_finished($success, $results, $operations) {
   }
 }
 
-
 /**
  * Product data transmission batch definition: ART
  */
