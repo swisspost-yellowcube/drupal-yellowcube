@@ -43,6 +43,18 @@ function yellowcube_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('yellowcube_plant', ''),
   );
 
+  $form['yellowcube_shipping_service'] = array(
+    '#type' => 'select',
+    '#title' => t('Basic Shipping Service'),
+    '#options' => array(
+      'ECO' => t('Economy'),
+      'PRI' => t('Priority'),
+      'PICKUP' => t('Pickup'),
+    ),
+    '#default_value' => variable_get('yellowcube_shipping_service', 'ECO'),
+    '#description' => t('This shipping service will be used to deliver yellowcube orders.'),
+  );
+
   $form['yellowcube_certificate'] = array(
     '#type' => 'textfield',
     '#title' => t('Path to certificate'),

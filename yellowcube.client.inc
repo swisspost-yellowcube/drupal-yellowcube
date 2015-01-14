@@ -217,8 +217,7 @@ function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
   $yc_order
     ->setOrderHeader(new OrderHeader(variable_get('yellowcube_depositor', ''), $order->order_id, date('Ymd', REQUEST_TIME)))
     ->setPartnerAddress($partner)
-    ->addValueAddedService(new BasicShippingServices(BasicShippingServices::ECO))
-    // XXX: Must be true to work around bug #41: https://trello.com/c/E3hmOIzl
+    ->addValueAddedService(new BasicShippingServices(variable_get('yellowcube_shipping_service', 'ECO')))
     ->setOrderDocumentsFlag(FALSE);
 
   foreach ($order->commerce_line_items['und'] as $key => $row) {
