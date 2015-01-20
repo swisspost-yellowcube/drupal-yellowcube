@@ -5,93 +5,10 @@
  */
 
 /**
- * Implements hook_requirements().
- */
-function yellowcube_requirements($phase) {
-  $requirements = array();
-  $t = get_t();
-
-  if ($phase === 'runtime') {
-    $product_count = db_query('SELECT COUNT(product_id) FROM {commerce_product}')->fetchField();
-
-    // Count the number of products that are up to date.
-    $updated_count = db_query("
-      SELECT COUNT(product_id)
-      FROM {commerce_product} AS cp
-      INNER JOIN {yellowcube_product_status} AS yps USING (sku)
-      WHERE (yps.updated >= cp.changed)
-    ")->fetchField();
-
-    $requirements['yellowcube_product_status'] = array(
-      'title' => $t('YellowCube product status'),
-      'value' => $t('@updated/@total products up to date.', array(
-        '@total' => $product_count,
-        '@updated' => $updated_count,
-      )),
-    );
-
-    if ($product_count === $updated_count) {
-      $requirements['yellowcube_product_status']['severity'] = REQUIREMENT_OK;
-    }
-    else {
-      $requirements['yellowcube_product_status']['severity'] = REQUIREMENT_WARNING;
-      $requirements['yellowcube_product_status']['description'] = $t('Some of your product data has not been sent to YellowCube yet. This can cause errors on check out. Please ensure your cron jobs are running and check the log for errors.');
-      $requirements['yellowcube_product_status']['weight'] = -1;
-    }
-  }
-
-  return $requirements;
-}
-
-/**
  * Implements hook_schema().
  */
 function yellowcube_schema() {
   $schema = array();
-
-  $schema['yellowcube_product_status'] = array(
-    'description' => 'Keeps track of YellowCube interaction for products',
-    'fields' => array(
-      'sku' => array(
-        'description' => 'The {commerce_product}.sku for the product.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-      ),
-      'yc_reference' => array(
-        'description' => 'The YellowCube reference number for the product/article.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-      ),
-      'article_status' => array(
-        'description' => 'YellowCube status for the article',
-        'type' => 'varchar',
-        'length' => 25,
-        'not null' => TRUE,
-      ),
-      'updated' => array(
-        'description' => 'Unix timestamp for when the YellowCube data was last updated.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-      ),
-      'queued' => array(
-        'description' => 'Timestamp for when the product was queued to be updated.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-      ),
-    ),
-    'foreign keys' => array(
-      'sku' => array(
-        'table' => 'commerce_product',
-        'columns' => array('sku' => 'sku'),
-      ),
-    ),
-    'primary key' => array('sku'),
-    'indexes' => array(
-      'yc_reference' => array('yc_reference'),
-    ),
-  );
 
   $schema['yellowcube_order'] = array(
     'description' => 'Keeps track of YellowCube order references for commerce_order records',

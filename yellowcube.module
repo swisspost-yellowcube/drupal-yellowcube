@@ -77,6 +77,7 @@ function yellowcube_commerce_shipping_service_info() {
 function yellowcube_cron() {
   module_load_include('jobs.inc', 'yellowcube');
 
+  //yellowcube_job_submit_new_orders();
   yellowcube_jobs_fetch_order_updates();
 }
 
@@ -105,19 +106,19 @@ function yellowcube_commerce_order_status_info() {
 
   $order_statuses['yellowcube_send'] = array(
     'name' => 'yellowcube_send',
-    'title' => t('YellowCube: send to YellowCube'),
+    'title' => variable_get('yellowcube_status_label_received', 'YellowCube: send to YellowCube'),
     'state' => 'yellowcube',
   );
 
   $order_statuses['yellowcube_received'] = array(
     'name' => 'yellowcube_received',
-    'title' => t('YellowCube: received by YellowCube'),
+    'title' => variable_get('yellowcube_status_label_sending', 'YellowCube: received by YellowCube'),
     'state' => 'yellowcube',
   );
 
   $order_statuses['yellowcube_send_failed'] = array(
     'name' => 'yellowcube_send_failed',
-    'title' => t('YellowCube: sending to YellowCube failed'),
+    'title' => variable_get('yellowcube_status_label_failed', 'YellowCube: sending to YellowCube failed'),
     'state' => 'yellowcube',
   );
 

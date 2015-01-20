@@ -7,9 +7,9 @@
 // Load the yellowcube-php via the autoload script provided by composer.
 require 'vendor/autoload.php';
 
-use YellowCube\Art\Article;
-use YellowCube\Art\ChangeFlag;
-use YellowCube\Art\UnitsOfMeasure\ISO;
+use YellowCube\ART\Article;
+use YellowCube\ART\ChangeFlag;
+use YellowCube\ART\UnitsOfMeasure\ISO;
 use YellowCube\WAB\AdditionalService\BasicShippingServices;
 use YellowCube\WAB\Order;
 use YellowCube\WAB\OrderHeader;

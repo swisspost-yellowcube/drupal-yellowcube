@@ -88,6 +88,49 @@ function yellowcube_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('yellowcube_endpoint', ''),
   );
 
+  $form['yellowcube_status_label_received'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Order status label: received'),
+    '#description' => t('The order status label'),
+    '#default_value' => variable_get('yellowcube_status_label_received', 'YellowCube: send to YellowCube'),
+  );
+
+
+  $form['yellowcube_status_label_sending'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Order status label: sending'),
+    '#description' => t('The order status label for pending orders'),
+    '#default_value' => variable_get('yellowcube_status_label_sending', 'YellowCube: received by YellowCube'),
+  );
+
+
+  $form['yellowcube_status_label_failed'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Order status label: failed'),
+    '#description' => t('The order status label for failed orders'),
+    '#default_value' => variable_get('yellowcube_status_label_failed', 'YellowCube: sending to YellowCube failed'),
+  );
+
+
+
+    $order_statuses['yellowcube_send'] = array(
+      'name' => 'yellowcube_send',
+      'title' => t('YellowCube: send to YellowCube'),
+      'state' => 'yellowcube',
+    );
+
+  $order_statuses['yellowcube_received'] = array(
+    'name' => 'yellowcube_received',
+    'title' => t('YellowCube: received by YellowCube'),
+    'state' => 'yellowcube',
+  );
+
+  $order_statuses['yellowcube_send_failed'] = array(
+    'name' => 'yellowcube_send_failed',
+    'title' => t('YellowCube: sending to YellowCube failed'),
+    'state' => 'yellowcube',
+  );
+
   return system_settings_form($form);
 }
 
