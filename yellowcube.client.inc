@@ -124,16 +124,8 @@ function yellowcube_client_update_product($sku) {
     $article->setHeight(round($product->field_dimensions['und'][0]['height'], 3), $dimension_unit);
 
   }
-
-
+  
   $response = yellowcube_client_get_service()->insertArticleMasterData($article);
-
-  // If we don't get a value in reference1, it means that the product is not
-  // yet registered. Change the flag to INSERT and try again.
-  if ($response->isSuccess() && !$response->getReference1()) {
-    $article->setChangeFlag(ChangeFlag::INSERT);
-    $response = yellowcube_client_get_service()->insertArticleMasterData($article);
-  }
 
   $product_link = l(
     t('view'),

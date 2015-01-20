@@ -106,13 +106,13 @@ function yellowcube_commerce_order_status_info() {
 
   $order_statuses['yellowcube_send'] = array(
     'name' => 'yellowcube_send',
-    'title' => variable_get('yellowcube_status_label_received', 'YellowCube: send to YellowCube'),
+    'title' => variable_get('yellowcube_status_label_sending', 'YellowCube: send to YellowCube'),
     'state' => 'yellowcube',
   );
 
   $order_statuses['yellowcube_received'] = array(
     'name' => 'yellowcube_received',
-    'title' => variable_get('yellowcube_status_label_sending', 'YellowCube: received by YellowCube'),
+    'title' => variable_get('yellowcube_status_label_received', 'YellowCube: received by YellowCube'),
     'state' => 'yellowcube',
   );
 

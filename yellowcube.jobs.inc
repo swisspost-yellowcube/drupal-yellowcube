@@ -63,13 +63,14 @@ function yellowcube_jobs_fetch_order_updates() {
         $header = $goodsIssue->getCustomerOrderHeader();
         $shipment_no = $header->getPostalShipmentNo();
         $shipping_url = 'http://www.post.ch/swisspost-tracking?formattedParcelCodes=' . $shipment_no;
+      }
+
+      if(!empty($goodsIssueList)) {
 
         //Add a message to the order history incl. link to shipping infos
         $message = t('Your order has been shipped. You can use the following url for shipping tracking: !url', array('!url' => $shipping_url));
         yellowcube_jobs_add_custom_message($order, 'completed', $message);
-      }
 
-      if(!empty($goodsIssueList)) {
         //Update the order status to complete
         commerce_order_status_update($order, 'complete', TRUE);
       }
@@ -119,19 +120,15 @@ function yellowcube_jobs_get_new_orders() {
  */
 
 function yellowcube_jobs_add_custom_message($order, $status, $message_body) {
-  $statuses = commerce_order_statuses();
-  $arguments = array(
-    '@order_status_previous' => $statuses[$order->status]['title'],
-    '@order_status' => $statuses[$status]['title'],
-  );
-  $order = commerce_order_status_update($order, $status);
-
-  $message = message_create('commerce_order_state', array('uid' => $order->uid, 'arguments' => $arguments));
+  $message = message_create('commerce_order_admin_comment', array('uid' => $order->uid));
   $wrapper = entity_metadata_wrapper('message', $message);
   $wrapper->message_commerce_order->set($order);
-  $wrapper->message_commerce_body->set($message_body);
+  $wrapper->message_commerce_body->set(array(
+    'value' => $message_body,
+    'summary' => '',
+    'format' => 'filtered_html',
+  ));
   $wrapper->save();
-
 }
 
 function yellowcube_job_submit_new_orders() {
