@@ -124,7 +124,7 @@ function yellowcube_client_update_product($sku) {
     $article->setHeight(round($product->field_dimensions['und'][0]['height'], 3), $dimension_unit);
 
   }
-  
+
   $response = yellowcube_client_get_service()->insertArticleMasterData($article);
 
   $product_link = l(
@@ -148,18 +148,19 @@ function yellowcube_client_update_product($sku) {
       $product_link
     );
 
-    drupal_set_message(
-      t(
-        'Product @sku was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.',
-        array(
-          '@sku' => $response->getReference1(),
-          '@ref' => $response->getReference(),
-          '@status' => $response->getStatusText(),
+    $current_batch = batch_get();
+    if (empty($current_batch)) {
+      drupal_set_message(
+        t(
+          'Product @sku was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.',
+          array(
+            '@sku' => $response->getReference1(),
+            '@ref' => $response->getReference(),
+            '@status' => $response->getStatusText(),
+          )
         )
-      )
-    );
-
-    // TODO: save reference ID to the database.
+      );
+    }
 
     return TRUE;
   }

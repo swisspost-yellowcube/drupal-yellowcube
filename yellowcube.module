@@ -33,10 +33,6 @@ function yellowcube_menu() {
     'file' => 'includes/yellowcube.admin.inc',
   );
 
-
-
-
-
   return $items;
 }
 
@@ -274,12 +270,33 @@ function yellowcube_stock_adjust($product, $new_stock) {
     return;
   }
 
-  $wrapper = entity_metadata_wrapper('commerce_product', $product);
-  $wrapper->commerce_stock->set($new_stock);
-  $result = $wrapper->save();
+  //only update stock and display a message if the stock level differs
+  $old_stock = $product->commerce_stock['und'][0]['value'];
+  if($old_stock != $new_stock) {
 
-  if ($result) {
-    watchdog('commerce_stock', 'Modified stock level of product %sku to %amount', array('%sku' => $product->sku, '%amount' => $new_stock));
+    $wrapper = entity_metadata_wrapper('commerce_product', $product);
+    $wrapper->commerce_stock->set($new_stock);
+    $result = $wrapper->save();
+
+    if ($result) {
+      watchdog('commerce_stock', 'Modified stock level of product %sku from %fromamount to %amount.', array(
+        '%sku' => $product->sku,
+        '%fromamount' => $old_stock,
+        '%amount' => $new_stock,
+        ));
+
+      drupal_set_message(
+        t(
+          'Modified stock level of product %sku from %fromamount to %amount.',
+          array(
+            '%sku' => $product->sku,
+            '%fromamount' => $old_stock,
+            '%amount' => $new_stock,
+          )
+        )
+      );
+
+    }
   }
 }
 

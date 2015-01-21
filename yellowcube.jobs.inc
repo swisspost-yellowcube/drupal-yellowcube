@@ -49,7 +49,6 @@ function yellowcube_jobs_fetch_order_updates() {
         );
 
         commerce_order_status_update($order, 'yellowcube_send_failed', TRUE);
-
         continue;
       }
     }
@@ -62,11 +61,16 @@ function yellowcube_jobs_fetch_order_updates() {
       foreach ($goodsIssueList as $goodsIssue) {
         $header = $goodsIssue->getCustomerOrderHeader();
         $shipment_no = $header->getPostalShipmentNo();
-        $shipping_url = 'http://www.post.ch/swisspost-tracking?formattedParcelCodes=' . $shipment_no;
+
+        //Multi packaging / shipping is not supported atm.
+        if(!empty($shipment_no)) {
+          //shipping number contains a semicolon, post api supports multiple values
+          $shipping_url = 'http://www.post.ch/swisspost-tracking?formattedParcelCodes=' . $shipment_no;
+          break;
+        }
       }
 
       if(!empty($goodsIssueList)) {
-
         //Add a message to the order history incl. link to shipping infos
         $message = t('Your order has been shipped. You can use the following url for shipping tracking: !url', array('!url' => $shipping_url));
         yellowcube_jobs_add_custom_message($order, 'completed', $message);
