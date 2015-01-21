@@ -55,6 +55,12 @@ function yellowcube_admin_settings_form($form, &$form_state) {
     '#description' => t('This shipping service will be used to deliver yellowcube orders.'),
   );
 
+  $form['yellowcube_tara_factor'] = array(
+    '#type' => 'textfield',
+    '#title' => t('YellowCube tara factor'),
+    '#default_value' => variable_get('yellowcube_tara_factor', '1.1'),
+  );
+
   $form['yellowcube_certificate'] = array(
     '#type' => 'textfield',
     '#title' => t('Path to certificate'),

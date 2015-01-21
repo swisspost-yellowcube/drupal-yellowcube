@@ -102,6 +102,11 @@ function yellowcube_client_update_product($sku) {
     }
 
     $article->setNetWeight(round($product->field_weight['und'][0]['weight'], 3), $weight_unit_iso);
+
+    // Gross weight with tara factor
+    $tara_factor = variable_get('yellowcube_tara_factor', '1.1');
+    $article->setGrossWeight(round($product->field_weight['und'][0]['weight'] * $tara_factor, 3), $weight_unit_iso);
+
   }
 
   //Setting the dimensions
