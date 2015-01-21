@@ -56,7 +56,7 @@ function yellowcube_update_product_action($product) {
  * @param stdClass $order
  *   Drupal Commerce order object to send to YellowCube.
  */
-function yellowcube_send_order_action($order) {
+function yellowcube_send_order_action($order, $skip_save = TRUE) {
   // Only proceed if we have a shipping address.
   if (!empty($order->commerce_customer_shipping['und'][0]['profile_id'])) {
     $shipping_profile = commerce_customer_profile_load($order->commerce_customer_shipping['und'][0]['profile_id']);
@@ -76,9 +76,9 @@ function yellowcube_send_order_action($order) {
   $success = yellowcube_client_add_order($ship_addr, $order);
 
   if ($success) {
-    commerce_order_status_update($order, 'yellowcube_received', TRUE);
+    commerce_order_status_update($order, 'yellowcube_received', $skip_save);
   }
   else {
-    commerce_order_status_update($order, 'yellowcube_send_failed', TRUE);
+    commerce_order_status_update($order, 'yellowcube_send_failed', $skip_save);
   }
 }

@@ -48,7 +48,7 @@ function yellowcube_jobs_fetch_order_updates() {
           $order_link
         );
 
-        commerce_order_status_update($order, 'yellowcube_send_failed', TRUE);
+        commerce_order_status_update($order, 'yellowcube_send_failed');
         continue;
       }
     }
@@ -76,7 +76,7 @@ function yellowcube_jobs_fetch_order_updates() {
         yellowcube_jobs_add_custom_message($order, 'completed', $message);
 
         //Update the order status to complete
-        commerce_order_status_update($order, 'complete', TRUE);
+        commerce_order_status_update($order, 'complete');
       }
 
     }
@@ -120,6 +120,30 @@ function yellowcube_jobs_get_new_orders() {
 }
 
 /**
+ * Returns all pending stock items
+ */
+
+function yellowcube_jobs_get_pending_stock($product) {
+
+  $pending_stock = 0;
+
+  foreach (commerce_order_load_multiple(array(), array('status' => 'yellowcube_received'), TRUE) as $order) {
+    foreach (entity_metadata_wrapper('commerce_order', $order)->commerce_line_items as $delta => $line_item_wrapper) {
+      if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) {
+        //if we find a pending line item, add it to the stock
+        $product_id = $line_item_wrapper->commerce_product->raw();
+        if($product_id == $product->product_id) {
+          $pending_stock += $line_item_wrapper->quantity->value();
+        }
+      }
+    }
+  }
+
+  return $pending_stock;
+
+}
+
+/**
  * Add a message to the order
  */
 
@@ -136,12 +160,12 @@ function yellowcube_jobs_add_custom_message($order, $status, $message_body) {
 }
 
 function yellowcube_job_submit_new_orders() {
-
+  module_load_include('rules.inc', 'yellowcube');
   $orders = yellowcube_jobs_get_new_orders();
 
   foreach ($orders as $order) {
     $order_loaded = commerce_order_load($order->order_id);
-    yellowcube_send_order_action($order_loaded);
+    yellowcube_send_order_action($order_loaded, false);
   }
 
 }

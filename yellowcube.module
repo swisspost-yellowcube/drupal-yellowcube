@@ -73,7 +73,7 @@ function yellowcube_commerce_shipping_service_info() {
 function yellowcube_cron() {
   module_load_include('jobs.inc', 'yellowcube');
 
-  //yellowcube_job_submit_new_orders();
+  yellowcube_job_submit_new_orders();
   yellowcube_jobs_fetch_order_updates();
 }
 
@@ -178,7 +178,6 @@ function yellowcube_batch_operation_send_product($current_product, &$context) {
   $product = commerce_product_load($current_product->product_id, NULL, TRUE);
   yellowcube_client_update_product($product->sku);
   $context['results'][] = $product->sku . ' : ' . check_plain($product->title);
-  $context['sandbox']['progress']++;
   $context['message'] = t('Now processing %product: %sku', array('%product' => check_plain($product->title), '%sku' => $product->sku));
 }
 
@@ -247,6 +246,7 @@ function yellowcube_batch_fetch_inventory_data() {
  *  Batch operation for sending data ART
  */
 function yellowcube_batch_operation_update_stock($stock_item, &$context) {
+  module_load_include('jobs.inc', 'yellowcube');
   $article_no = $stock_item['art-no'];
 
   //unfortunately, not all stock items have an article number
@@ -256,7 +256,9 @@ function yellowcube_batch_operation_update_stock($stock_item, &$context) {
     $product = commerce_product_load_by_sku($article_no);
 
     if ($product) {
-      yellowcube_stock_adjust($product, $stock_item['qty']);
+      //Check pending stock items and subtract them, because yellowcube is not yet up-to-date.
+      $pending_stock = yellowcube_jobs_get_pending_stock($product);
+      yellowcube_stock_adjust($product, $stock_item['qty'] - $pending_stock);
     }
   }
 
