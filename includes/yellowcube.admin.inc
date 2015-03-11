@@ -75,13 +75,14 @@ function yellowcube_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('yellowcube_password', ''),
   );
 
+  // T=Test / P=Production / D=Development
   $form['yellowcube_mode'] = array(
     '#type' => 'select',
     '#title' => t('Operating mode'),
     '#options' => array(
       'P' => t('Production'),
-      'D' => t('Integration'),
       'T' => t('Test'),
+      'D' => t('Development'), // only used during development of YC Connector
     ),
     '#default_value' => variable_get('yellowcube_mode', 'T'),
     '#description' => t('If test mode is enabled, orders will get sent to the YellowCube test system. No actual goods will be sent.'),
