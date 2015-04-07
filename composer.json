@@ -12,18 +12,7 @@
     }
   ],
 
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "git@github.com:liip/yellowcube-php.git"
-    },
-    {
-        "type": "vcs",
-        "url": "https://github.com/liip-forks/wse-php.git"
-    }
-  ],
-
   "require": {
-    "liip/yellowcube-php": "dev-master"
+    "swisspost-yellowcube/yellowcube-php": "dev-master"
   }
 }
