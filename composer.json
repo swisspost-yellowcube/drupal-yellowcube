@@ -2,7 +2,6 @@
   "name": "drupal/yellowcube",
   "description": "YellowCube module for Drupal.",
   "license": "GPL-2.0+",
-  "minimum-stability": "dev",
 
   "authors": [
     {
@@ -13,6 +12,6 @@
   ],
 
   "require": {
-    "swisspost-yellowcube/yellowcube-php": "dev-master"
+    "swisspost-yellowcube/yellowcube-php": "~1.0"
   }
 }
