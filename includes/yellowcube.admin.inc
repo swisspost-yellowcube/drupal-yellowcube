@@ -118,6 +118,23 @@ function yellowcube_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('yellowcube_status_label_failed', 'YellowCube: sending to YellowCube failed'),
   );
 
+  $form['yellowcube_log_level'] = array(
+    '#type' => 'select',
+    '#title' => t('Log level'),
+    '#options' => array(
+      'debug' => t('Debug – Log every SOAP request and response'),
+      'info' => t('Info – Log YellowCube service method calls'),
+      'error' => t('Error – Log SOAP faults'),
+      '' => t('None – No logging'),
+    ),
+    '#description' => t(
+      "Log messages into !log_messages. Levels include the ones below. Default is 'error'.",
+      array('!log_messages' => l('log messages', 'admin/reports/dblog'))
+    ),
+    '#default_value' => variable_get('yellowcube_log_level', 'error'),
+  );
+
+
   return system_settings_form($form);
 }
 
