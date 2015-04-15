@@ -10,6 +10,30 @@
  */
 function yellowcube_menu() {
   $items = array();
+//
+//  $items['admin/commerce/config/shipping/methods/yellowcube/add'] = array(
+//    'title' => 'Add a yellowcube shipping service',
+//    'description' => 'Create a new YelloCube shipping service for a YellowCube product.',
+//    'page callback' => 'drupal_goto',
+//    'page arguments' => array('admin/commerce/config/shipping/services/yellowcube/add'),
+//    'access callback' => true,
+////    'access arguments' => array('create'),
+//    'type' => MENU_LOCAL_TASK,
+//    'context' => MENU_CONTEXT_INLINE,
+//    'weight' => 8,
+//  );
+
+  $items['admin/commerce/config/shipping/services/yellowcube/add'] = array(
+    'title' => 'Add a yellowcube shipping service',
+    'description' => 'Create a new yellowcube shipping service, including a title and base shipping rate.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yellowcube_shipping_service_form', commerce_flat_rate_service_new()),
+    'access callback' => true,
+//    'access arguments' => array('create'),
+    'type' => MENU_LOCAL_ACTION,
+    'context' => MENU_CONTEXT_PAGE,
+    'file' => 'includes/yellowcube_shipping_service.admin.inc',
+  );
 
   $items['admin/commerce/config/shipping/yellowcube'] = array(
     'title' => 'YellowCube',
@@ -48,23 +72,157 @@ function yellowcube_commerce_shipping_method_info() {
   );
 }
 
+function yellowcube_commerce_products() {
+  return array(
+    'postpac_eco' => array(
+      'title' => t('PostPac Economy'),
+      'basic' => 'ECO',
+      'additional' => ''
+    ),
+    'postpac_eco_signature'=> array(
+      'title' => t('PostPac Economy mit Unterschrift (SI)'),
+      'basic' => 'ECO',
+      'additional' => 'SI'
+    ),
+    'postpac_prio'=> array(
+      'title' => t('PostPac Priority'),
+      'basic' => 'PRI',
+      'additional' => ''
+    ),
+    'postpac_prio_signature'=> array(
+      'title' => t('PostPac Priority mit Unterschrift (SI)'),
+      'basic' => 'PRI',
+      'additional' => 'SI'
+    ),
+    'postpac_prio_signature_evening'=> array(
+      'title' => t('PostPac Priority SI Abendzustellung'),
+      'basic' => 'PRI',
+      'additional' => 'SI;AZ'
+    ),
+    'postpac_prio_signature_saturday'=> array(
+      'title' => t('PostPac Priority SI Samstagszustellung'),
+      'basic' => 'PRI',
+      'additional' => ''
+    ),
+    'pickup_apost'=> array(
+      'title' => t('Abholung A-Post'),
+      'basic' => 'PICKUP',
+      'additional' => 'APOST'
+    ),
+    'pickup_international_prio_gr'=> array(
+      'title' => t('Abholung International Priority Gross'),
+      'basic' => 'PICKUP',
+      'additional' => 'INTPRI;GR'
+    ),
+    'pickup_international_prio_mx'=> array(
+      'title' => t('Abholung International Priority Maxi'),
+      'basic' => 'PICKUP',
+      'additional' => 'INTPRI;MX'
+    ),
+    'pickup_international_eco_gr'=> array(
+      'title' => t('Abholung International Economy Gross'),
+      'basic' => 'PICKUP',
+      'additional' => 'INTECO;GR'
+    ),
+    'pickup_international_eco_mx'=> array(
+      'title' => t('Abholung International Economy Maxi'),
+      'basic' => 'PICKUP',
+      'additional' => 'INTECO;GR'
+    ),
+    'pickup_oftringen'=> array(
+      'title' => t('Abholung in Oftringen'),
+      'basic' => 'PICKUP',
+      'additional' => ''
+    ),
+  );
+}
+
 /**
  * Implements hook_commerce_shipping_service_info().
  */
 function yellowcube_commerce_shipping_service_info() {
   $services = array();
 
-  $services['yellowcube'] = array(
-    'title' => t('YellowCube'),
-    'display_title' => t('YellowCube'),
-    'description' => '',
-    'shipping_method' => 'yellowcube',
-    'callbacks' => array(
-      'rate' => 'yellowcube_service_rate_order',
-    ),
-  );
+  // Look for shipping ervices currently defined in the database.
+  $result = db_query('SELECT * FROM {yellowcube_shipping_service}')->fetchAllAssoc('name', PDO::FETCH_ASSOC);
+
+  if (!empty($result)) {
+    foreach ($result as $name => $service) {
+      // Create a base rate price array for the service
+      $base_rate = array(
+        'amount' => $service['amount'],
+        'currency_code' => $service['currency_code'],
+        'data' => array(
+        ),
+      );
+
+      // Unserialize the data array for the service.
+      $data = !empty($service['data']) ? unserialize($service['data']) : array();
+
+      $price_component_type = 'yellowcube_' . $name;
+
+      // If the data array specifies an included tax, include it now.
+      if (module_exists('commerce_tax') && !empty($data['include_tax']) && $tax_rate = commerce_tax_rate_load($data['include_tax'])) {
+        // Reverse apply the tax.
+        $tax_amount = $base_rate['amount'] - ($base_rate['amount'] / (1 + $tax_rate['rate']));
+        $tax_amount = commerce_tax_rate_round_amount($tax_rate, $tax_amount);
+
+        // Add a base price to the data array.
+        $component = array(
+          'amount' => $base_rate['amount'] - $tax_amount,
+          'currency_code' => $base_rate['currency_code'],
+          'data' => array(),
+        );
+
+        $base_rate['data'] = commerce_price_component_add($base_rate, $price_component_type, $component, TRUE, FALSE);
+
+        // Add the tax to the data array.
+        $component['amount'] = $tax_amount;
+        $component['data']['tax_rate'] = $tax_rate;
+
+        $base_rate['data'] = commerce_price_component_add($base_rate, $tax_rate['price_component'], $component, TRUE);
+      }
+
+      // Add the full service array to our return value.
+      $services[$name] = array(
+        'title' => $service['title'],
+        'display_title' => !empty($service['display_title']) ? $service['display_title'] : $service['title'],
+        'shipping_method' => 'yellowcube',
+        'price_component' => $price_component_type,
+        'callbacks' => array(
+          'rate' => 'yellowcube_service_rate_order',
+        ),
+        'base_rate' => $base_rate,
+        'method' => $service['method'],
+        'product' => $service['product'],
+        'existing_machine_name' => $service['existing_machine_name'],
+        'data' => $data,
+      );
+    }
+  }
 
   return $services;
+}
+
+function yellowcube_shipping_service_save($shipping_service, $skip_reset = FALSE) {
+  // Move the amount and currency code up a level in the service array.
+  if (!empty($shipping_service['base_rate'])) {
+    $shipping_service['amount'] = $shipping_service['base_rate']['amount'];
+    $shipping_service['currency_code'] = $shipping_service['base_rate']['currency_code'];
+  }
+
+  $op = drupal_write_record('yellowcube_shipping_service', $shipping_service, empty($shipping_service['is_new']) ? 'name' : array());
+
+  // Clear the necessary caches and rebuild the menu items.
+  if (!$skip_reset) {
+    commerce_shipping_services_reset();
+    entity_defaults_rebuild();
+    rules_clear_cache(TRUE);
+    menu_rebuild();
+  }
+
+  return $op;
+
 }
 
 /**
@@ -125,7 +283,13 @@ function yellowcube_commerce_order_status_info() {
  * Shipping service callback: returns the base rate for a flat rate service.
  */
 function yellowcube_service_rate_order($shipping_service, $order) {
-  return array();
+//  xdebug_break();
+//  return array();
+  return array(
+    'amount' => 2000,
+    'currency_code' => 'USD',
+    'data' => array(),
+  );
 }
 
 /**

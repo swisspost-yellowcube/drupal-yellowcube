@@ -51,8 +51,8 @@ function yellowcube_shipping_service_form($form, &$form_state, $shipping_service
     '#type' => 'radios',
     '#title' => t('Method'),
     '#options' => array(
-      'add_new' => t('Add a new service'),
-      'map_to_existing' => t('Map to an existing shipping service'),
+      'add_new' => t('Add a new shipping service'),
+      'map_to_existing' => t('Use an existing shipping service'),
     ),
     '#default_value' => 'add_new',
     '#description' => t(''),
