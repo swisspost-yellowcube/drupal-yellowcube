@@ -50,7 +50,14 @@ function yellowcube_client_get_config() {
  * @return YellowCube\Service
  */
 function yellowcube_client_get_service() {
-  return new YellowCube\Service(yellowcube_client_get_config());
+  $service = new YellowCube\Service(yellowcube_client_get_config());
+
+  $minLogLevel = variable_get('yellowcube_log_level', '');
+  if (!empty($minLogLevel)) {
+    $service->setLogger(new \YellowCube\Util\Logger\WatchdogLogger('yellowcube', $minLogLevel));
+  }
+
+  return $service;
 }
 
 /**
