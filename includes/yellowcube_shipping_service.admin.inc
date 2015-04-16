@@ -56,8 +56,18 @@ function yellowcube_shipping_service_form($form, &$form_state, $shipping_service
     '#suffix' => '</div>',
   );
 
-  $method_form = yellowcube_shipping_service_method_callback($form, $form_state, $current_method);
-  $form['detail'] = array_merge($form['detail'], $method_form['detail']);
+  $method = !empty($form_state['values']['shipping_service']['method']) ? $form_state['values']['shipping_service']['method'] : $current_method;
+
+  switch($method) {
+    case YELLOWCUBE_SHIPPING_ADD_NEW:
+      $form['detail'] = yellowcube_shipping_service_add_new_form($form, $form_state);
+      break;
+    case YELLOWCUBE_SHIPPING_USE_EXISTING:
+      $form['detail'] = yellowcube_shipping_service_use_existing_form($form, $form_state);
+      break;
+    default:
+      throw new InvalidArgumentException('Unknown method' . $method);
+  };
 
   $form['actions'] = array(
     '#type' => 'container',
@@ -87,23 +97,13 @@ function yellowcube_shipping_service_form($form, &$form_state, $shipping_service
 }
 
 /**
- * Build the form based on currently selected method.
+ * Returns the detail form.
  *
  * @return array
  * @throws \InvalidArgumentException if no method is given.
  */
-function yellowcube_shipping_service_method_callback($form, &$form_state, $default_method = null) {
-  $method = !empty($form_state['values']['shipping_service']['method']) ? $form_state['values']['shipping_service']['method'] : $default_method;
-
-  switch($method) {
-    case YELLOWCUBE_SHIPPING_ADD_NEW:
-      return yellowcube_shipping_service_add_new_form($form, $form_state);
-      break;
-    case YELLOWCUBE_SHIPPING_USE_EXISTING:
-      return yellowcube_shipping_service_use_existing_form($form, $form_state);
-    default:
-      throw new InvalidArgumentException('Unknown method' . $method);
-  }
+function yellowcube_shipping_service_method_callback($form, &$form_state) {
+  return $form['detail'];
 }
 
 /**
@@ -112,10 +112,9 @@ function yellowcube_shipping_service_method_callback($form, &$form_state, $defau
  * @return array
  */
 function yellowcube_shipping_service_add_new_form($form, &$form_state) {
-  $add_new_form = array();
   $shipping_service = $form_state['shipping_service'];
 
-  $add_new_form['amount'] = array(
+  $form['detail']['amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Rate'),
     '#default_value' => commerce_currency_amount_to_decimal($shipping_service['base_rate']['amount'], $shipping_service['base_rate']['currency_code']),
@@ -126,7 +125,7 @@ function yellowcube_shipping_service_add_new_form($form, &$form_state) {
 
   // Build a currency options list from all enabled currencies.
   $currencies = commerce_currency_get_code(TRUE);
-  $add_new_form['currency_code'] = array(
+  $form['detail']['currency_code'] = array(
     '#type' => 'select',
     '#title' => t('Currency'),
     '#options' => $currencies,
@@ -135,7 +134,7 @@ function yellowcube_shipping_service_add_new_form($form, &$form_state) {
     '#required' => TRUE,
   );
 
-  $add_new_form['title'] = array(
+  $form['detail']['title'] = array(
     '#type' => 'textfield',
     '#title' => t('Title'),
     '#default_value' => $shipping_service['title'],
@@ -147,7 +146,7 @@ function yellowcube_shipping_service_add_new_form($form, &$form_state) {
   );
 
   if (empty($shipping_service['name'])) {
-    $add_new_form['name'] = array(
+    $form['detail']['name'] = array(
       '#type' => 'machine_name',
       '#title' => t('Machine name'),
       '#default_value' => $shipping_service['name'],
@@ -161,13 +160,13 @@ function yellowcube_shipping_service_add_new_form($form, &$form_state) {
     );
   }
   else {
-    $add_new_form['name'] = array(
+    $form['detail']['name'] = array(
       '#type' => 'value',
       '#value' => $shipping_service['name'],
     );
   }
 
-  $add_new_form['display_title'] = array(
+  $form['detail']['display_title'] = array(
     '#type' => 'textfield',
     '#title' => t('Display title'),
     '#default_value' => $shipping_service['display_title'],
@@ -175,7 +174,7 @@ function yellowcube_shipping_service_add_new_form($form, &$form_state) {
     '#size' => 32,
   );
 
-  return array('detail' => $add_new_form);
+  return $form['detail'];
 }
 
 /**
@@ -184,10 +183,9 @@ function yellowcube_shipping_service_add_new_form($form, &$form_state) {
  * @return array
  */
 function yellowcube_shipping_service_use_existing_form($form, &$form_state) {
-  $existing_form = array();
   $shipping_service = $form_state['shipping_service'];
 
-  $existing_form['existing_machine_name'] = array(
+  $form['detail']['existing_machine_name'] = array(
     '#type' => 'select',
     '#title' => t('Existing shipping service'),
     '#options' => commerce_shipping_service_get_title(),
@@ -196,7 +194,7 @@ function yellowcube_shipping_service_use_existing_form($form, &$form_state) {
     '#required' => TRUE,
   );
 
-  return array('detail' => $existing_form);
+  return $form['detail'];
 }
 
 /**
@@ -208,7 +206,7 @@ function yellowcube_shipping_service_form_validate($form, &$form_state) {
   }
 
   // Ensure the rate amount is numeric.
-  if (!empty($form_state['values']['detail']['amount']) && !is_numeric($form_state['values']['detail']['amount'])) {
+  if (!is_numeric($form_state['values']['detail']['amount'])) {
     form_set_error('detail][amount', t('You must enter a numeric value for the rate amount.'));
   }
   else {
@@ -229,7 +227,7 @@ function yellowcube_shipping_service_form_submit($form, &$form_state) {
   $shipping_service['product'] = $service['product'];
   $shipping_service['method'] = $service['method'];
 
-  switch ($form_state['values']['shipping_service']['method']) {
+  switch ($service['method']) {
     case YELLOWCUBE_SHIPPING_USE_EXISTING:
       $shipping_service['name'] = $service['product'] . '_' . $detail['existing_machine_name'];
       $shipping_service['title'] = $service['product'] . '_' . $detail['existing_machine_name'];
