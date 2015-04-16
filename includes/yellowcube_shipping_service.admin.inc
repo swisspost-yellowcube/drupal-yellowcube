@@ -235,6 +235,7 @@ function yellowcube_shipping_service_form_submit($form, &$form_state) {
   $detail = $form_state['values']['detail'];
   $service = $form_state['values']['shipping_service'];
 
+  $shipping_service['product'] = $service['product'];
   $shipping_service['method'] = $service['method'];
 
   switch ($form_state['values']['shipping_service']['method']) {
