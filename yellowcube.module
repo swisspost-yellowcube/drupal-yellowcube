@@ -4,36 +4,54 @@
  * @file
  * YellowCube integration module for Drupal Commerce.
  */
+define('YELLOWCUBE_SHIPPING_ADD_NEW', 'add_new');
+define('YELLOWCUBE_SHIPPING_USE_EXISTING', 'use_existing');
 
 /**
  * Implements hook_menu().
  */
 function yellowcube_menu() {
   $items = array();
-//
-//  $items['admin/commerce/config/shipping/methods/yellowcube/add'] = array(
-//    'title' => 'Add a yellowcube shipping service',
-//    'description' => 'Create a new YelloCube shipping service for a YellowCube product.',
-//    'page callback' => 'drupal_goto',
-//    'page arguments' => array('admin/commerce/config/shipping/services/yellowcube/add'),
-//    'access callback' => true,
-////    'access arguments' => array('create'),
-//    'type' => MENU_LOCAL_TASK,
-//    'context' => MENU_CONTEXT_INLINE,
-//    'weight' => 8,
-//  );
 
   $items['admin/commerce/config/shipping/services/yellowcube/add'] = array(
     'title' => 'Add a yellowcube shipping service',
     'description' => 'Create a new yellowcube shipping service, including a title and base shipping rate.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('yellowcube_shipping_service_form', commerce_flat_rate_service_new()),
-    'access callback' => true,
-//    'access arguments' => array('create'),
+    'access arguments' => array('administer shipping'),
     'type' => MENU_LOCAL_ACTION,
     'context' => MENU_CONTEXT_PAGE,
     'file' => 'includes/yellowcube_shipping_service.admin.inc',
   );
+
+  foreach (commerce_shipping_services('yellowcube') as $name => $shipping_service) {
+    // Convert underscores to hyphens for the menu item argument.
+    $service_name_arg = 'yellowcube-' . strtr($name, '_', '-');
+
+    $items['admin/commerce/config/shipping/services/' . $service_name_arg . '/edit'] = array(
+      'title' => 'Edit',
+      'description' => 'Edit the YellowCube shipping service.',
+      'page callback' => 'yellowcube_shipping_service_edit_page',
+      'page arguments' => array($name),
+      'access arguments' => array('administer shipping'),
+      'type' => MENU_LOCAL_TASK,
+      'context' => MENU_CONTEXT_INLINE,
+      'weight' => 0,
+      'file' => 'includes/yellowcube_shipping_service.admin.inc',
+    );
+
+    $items['admin/commerce/config/shipping/services/' . $service_name_arg . '/delete'] = array(
+      'title' => 'Delete',
+      'description' => 'Delete the YellowCube shipping service.',
+      'page callback' => 'yellowcube_shipping_service_delete_page',
+      'page arguments' => array($name),
+      'access arguments' => array('administer shipping'),
+      'type' => MENU_LOCAL_TASK,
+      'context' => MENU_CONTEXT_INLINE,
+      'weight' => 10,
+      'file' => 'includes/yellowcube_shipping_service.admin.inc',
+    );
+  }
 
   $items['admin/commerce/config/shipping/yellowcube'] = array(
     'title' => 'YellowCube',
