@@ -258,6 +258,13 @@ function yellowcube_commerce_shipping_service_info() {
   return $services;
 }
 
+/**
+ * Saves or updates a shipping service.
+ *
+ * @param $shipping_service
+ * @param bool $skip_reset
+ * @return bool|int
+ */
 function yellowcube_shipping_service_save($shipping_service, $skip_reset = FALSE) {
   // Move the amount and currency code up a level in the service array.
   if (!empty($shipping_service['base_rate'])) {
@@ -276,7 +283,38 @@ function yellowcube_shipping_service_save($shipping_service, $skip_reset = FALSE
   }
 
   return $op;
+}
 
+/**
+ * Deletes a flat rate service.
+ *
+ * @param $name
+ *   The machine-name of the flat rate service.
+ * @param $skip_reset
+ *   Boolean indicating whether or not this delete should result in shipping
+ *   services being reset and the menu being rebuilt; defaults to FALSE. This is
+ *   useful when you intend to perform many deletions at once, as menu
+ *   rebuilding is very costly in terms of performance.
+ */
+function yellowcube_shipping_service_delete($name, $skip_reset = FALSE) {
+  $shipping_service = commerce_shipping_service_load($name);
+
+  db_delete('yellowcube_shipping_service')
+    ->condition('name', $name)
+    ->execute();
+
+  rules_config_delete(array('commerce_shipping_service_' . $name));
+
+  // Clear the necessary caches and rebuild the menu items.
+  if (!$skip_reset) {
+    commerce_shipping_services_reset();
+    entity_defaults_rebuild();
+    rules_clear_cache(TRUE);
+    menu_rebuild();
+  }
+
+  // Notify other modules that this flat rate service has been deleted.
+  module_invoke_all('yellowcube_shipping_service_delete', $shipping_service, $skip_reset);
 }
 
 /**

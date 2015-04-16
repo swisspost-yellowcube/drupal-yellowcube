@@ -308,12 +308,12 @@ function yellowcube_shipping_service_delete_form($form, &$form_state, $shipping_
 function yellowcube_shipping_service_delete_form_submit($form, &$form_state) {
   $shipping_service = $form_state['shipping_service'];
 
-  commerce_flat_rate_service_delete($shipping_service['name']);
+  yellowcube_shipping_service_delete($shipping_service['name']);
 
   drupal_set_message(t('The shipping service <em>%title</em> has been deleted.', array('%title' => $shipping_service['title'])));
   watchdog('commerce_flat_rate', 'Deleted shipping service <em>%title</em>.', array('%title' => $shipping_service['title']), WATCHDOG_NOTICE);
 
-  $form_state['redirect'] = 'admin/commerce/config/shipping/services/flat-rate';
+  $form_state['redirect'] = 'admin/commerce/config/shipping/services/yellowcube';
 }
 
 /**
