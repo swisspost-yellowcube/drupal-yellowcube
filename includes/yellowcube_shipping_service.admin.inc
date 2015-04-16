@@ -6,15 +6,6 @@
  */
 
 
-function yellowcube_shipping_service_products() {
-  $options = array();
-  foreach (yellowcube_commerce_products() as $key => $product) {
-    $options[$key] = $product['title'];
-  }
-
-  return $options;
-}
-
 /**
  * Builds the form for adding and editing yellowcube.
  */
@@ -34,7 +25,7 @@ function yellowcube_shipping_service_form($form, &$form_state, $shipping_service
   $form['shipping_service']['product'] = array(
     '#type' => 'select',
     '#title' => t('YellowCube Product'),
-    '#options' => yellowcube_shipping_service_products(),
+    '#options' => yellowcube_shipping_service_product_titles(),
     '#default_value' => !empty($shipping_service['product']) ? $shipping_service['product'] : null,
     '#description' => t('The YellowCube product you would like to use as shipping service.'),
     '#required' => TRUE,

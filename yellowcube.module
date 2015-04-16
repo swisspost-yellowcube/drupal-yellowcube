@@ -169,6 +169,20 @@ function yellowcube_commerce_products($name = null) {
 }
 
 /**
+ * Returns a list of all product titles keyed by their name.
+ *
+ * @return array
+ */
+function yellowcube_shipping_service_product_titles() {
+  $options = array();
+  foreach (yellowcube_commerce_products() as $key => $product) {
+    $options[$key] = $product['title'];
+  }
+
+  return $options;
+}
+
+/**
  * Returns a YellowCube product for given shipping service.
  *
  * @param $shipping_service
