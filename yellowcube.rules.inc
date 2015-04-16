@@ -66,14 +66,27 @@ function yellowcube_send_order_action($order, $skip_save = TRUE) {
     }
   }
 
+  // Loop through the line items to find the shipping service.
+  $line_items = $order->commerce_line_items['und'];
+  foreach ($line_items as $delta => $line_item_wrapper) {
+    $line_item_id = $line_item_wrapper['line_item_id'];
+    $line_item = commerce_line_item_load($line_item_id);
+    //dpm($line_item);
+    if(isset($line_item->commerce_shipping_service)) {
+      // This is want we need, the shipping service name.
+      $shipping_service_name = $line_item->commerce_shipping_service['und'][0]['value'];
+    }
+  }
+  $shipping_service = commerce_shipping_service_load($shipping_service_name);
+
   // If we couldn't find the required information in the order data, bail out now.
-  if (empty($ship_addr)) {
+  if (empty($ship_addr) || empty($shipping_service)) {
     return;
   }
 
   module_load_include('client.inc', 'yellowcube');
 
-  $success = yellowcube_client_add_order($ship_addr, $order);
+  $success = yellowcube_client_add_order($ship_addr, $shipping_service, $order);
 
   if ($success) {
     commerce_order_status_update($order, 'yellowcube_received', $skip_save);

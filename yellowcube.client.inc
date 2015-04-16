@@ -10,6 +10,7 @@ require 'vendor/autoload.php';
 use YellowCube\ART\Article;
 use YellowCube\ART\ChangeFlag;
 use YellowCube\ART\UnitsOfMeasure\ISO;
+use YellowCube\WAB\AdditionalService\AdditionalShippingServices;
 use YellowCube\WAB\AdditionalService\BasicShippingServices;
 use YellowCube\WAB\Order;
 use YellowCube\WAB\OrderHeader;
@@ -196,13 +197,15 @@ function yellowcube_client_update_product($sku) {
  *
  * @param array $ship_addr
  *   Shipping address, in array format available on the customer profile.
+ * @param array $shipping_service
+ *   Drupal Commerce shipping service object.
  * @param stdClass $order
  *   Drupal Commerce order object.
  *
  * @return bool
  *   TRUE on success, FALSE on failure.
  */
-function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
+function yellowcube_client_add_order(array $ship_addr, array $shipping_service, stdClass $order) {
   $partner = new Partner();
   $partner
     ->setPartnerType('WE')
@@ -221,8 +224,13 @@ function yellowcube_client_add_order(array $ship_addr, stdClass $order) {
   $yc_order
     ->setOrderHeader(new OrderHeader(variable_get('yellowcube_depositor', ''), $order->order_id, date('Ymd', REQUEST_TIME)))
     ->setPartnerAddress($partner)
-    ->addValueAddedService(new BasicShippingServices(variable_get('yellowcube_shipping_service', 'ECO')))
     ->setOrderDocumentsFlag(FALSE);
+
+  $yc_product = yellowcube_commerce_products($shipping_service['product']);
+  $yc_order->addValueAddedService(new BasicShippingServices($yc_product['basic']));
+  if (!empty($yc_product['additional'])) {
+    $yc_order->addValueAddedService(new AdditionalShippingServices($yc_product['additional']));
+  }
 
   foreach ($order->commerce_line_items['und'] as $key => $row) {
     $line_item = commerce_line_item_load($row['line_item_id']);
