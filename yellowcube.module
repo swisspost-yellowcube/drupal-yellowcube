@@ -90,6 +90,13 @@ function yellowcube_commerce_shipping_method_info() {
   );
 }
 
+/**
+ * Returns all or one YellowCube products.
+ *
+ * @param string $name Optional product name to get only one result.
+ *
+ * @return array
+ */
 function yellowcube_commerce_products($name = null) {
   $products = array(
     'postpac_eco' => array(
@@ -159,6 +166,29 @@ function yellowcube_commerce_products($name = null) {
   }
 
   return $products;
+}
+
+/**
+ * Returns a YellowCube product for given shipping service.
+ *
+ * @param $shipping_service
+ * @return array
+ */
+function yellowcube_commerce_product_for_shipping_service($shipping_service) {
+  if (!empty($shipping_service['product'])) {
+    return yellowcube_commerce_products($shipping_service['product']);
+  }
+
+  $service = db_query(
+    'SELECT * FROM {yellowcube_shipping_service} WHERE existing_machine_name = :name',
+    array('name' => $shipping_service['name'])
+  )->fetchAssoc();
+
+  if (empty($service)) {
+    return array();
+  }
+
+  return yellowcube_commerce_products($service['product']);
 }
 
 /**

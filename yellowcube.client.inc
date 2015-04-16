@@ -197,15 +197,15 @@ function yellowcube_client_update_product($sku) {
  *
  * @param array $ship_addr
  *   Shipping address, in array format available on the customer profile.
- * @param array $shipping_service
- *   Drupal Commerce shipping service object.
+ * @param array $yc_product
+ *   YellowCube product array.
  * @param stdClass $order
  *   Drupal Commerce order object.
  *
  * @return bool
  *   TRUE on success, FALSE on failure.
  */
-function yellowcube_client_add_order(array $ship_addr, array $shipping_service, stdClass $order) {
+function yellowcube_client_add_order(array $ship_addr, array $yc_product, stdClass $order) {
   $partner = new Partner();
   $partner
     ->setPartnerType('WE')
@@ -226,7 +226,6 @@ function yellowcube_client_add_order(array $ship_addr, array $shipping_service, 
     ->setPartnerAddress($partner)
     ->setOrderDocumentsFlag(FALSE);
 
-  $yc_product = yellowcube_commerce_products($shipping_service['product']);
   $yc_order->addValueAddedService(new BasicShippingServices($yc_product['basic']));
   if (!empty($yc_product['additional'])) {
     $yc_order->addValueAddedService(new AdditionalShippingServices($yc_product['additional']));
