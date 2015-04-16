@@ -78,7 +78,6 @@ function yellowcube_schema() {
       'existing_machine_name' => array(
         'description' => 'The existing machine name if this is a mapping.',
         'type' => 'varchar',
-        'not null' => TRUE,
         'length' => 255,
       ),
       'amount' => array(
@@ -91,7 +90,6 @@ function yellowcube_schema() {
         'description' => 'The currency code of the base rate of the service.',
         'type' => 'varchar',
         'length' => 32,
-        'not null' => TRUE,
       ),
       'data' => array(
         'description' => 'A serialized array of additional data.',
