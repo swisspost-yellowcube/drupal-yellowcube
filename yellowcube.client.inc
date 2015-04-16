@@ -122,19 +122,26 @@ function yellowcube_client_update_product($sku) {
     switch ($dimension_unit) {
       case 'm':
         $dimension_unit = ISO::MTR;
+        $volume_unit = ISO::MTQ;
         break;
       case 'cm':
         $dimension_unit = ISO::CMT;
+        $volume_unit = ISO::CMQ;
         break;
       default:
         $dimension_unit = ISO::MTR;
+        $volume_unit = ISO::MTQ;
     }
 
-    $article->setLength(round($product->field_dimensions['und'][0]['length'], 3), $dimension_unit);
-    $article->setWidth(round($product->field_dimensions['und'][0]['width'], 3), $dimension_unit);
-    $article->setHeight(round($product->field_dimensions['und'][0]['height'], 3), $dimension_unit);
-
+    $length = round($product->field_dimensions['und'][0]['length'], 3);
+    $width = round($product->field_dimensions['und'][0]['width'], 3);
+    $height = round($product->field_dimensions['und'][0]['height'], 3);
+    $article->setLength($length, $dimension_unit);
+    $article->setWidth($width, $dimension_unit);
+    $article->setHeight($height, $dimension_unit);
+    $article->setVolume(round($width * $height * $length, 3), $volume_unit);
   }
+
 
   $response = yellowcube_client_get_service()->insertArticleMasterData($article);
 
