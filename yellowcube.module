@@ -90,8 +90,8 @@ function yellowcube_commerce_shipping_method_info() {
   );
 }
 
-function yellowcube_commerce_products() {
-  return array(
+function yellowcube_commerce_products($name = null) {
+  $products = array(
     'postpac_eco' => array(
       'title' => t('PostPac Economy'),
       'basic' => 'ECO',
@@ -153,6 +153,12 @@ function yellowcube_commerce_products() {
       'additional' => ''
     ),
   );
+
+  if (!empty($name)) {
+    return $products[$name];
+  }
+
+  return $products;
 }
 
 /**
@@ -301,13 +307,11 @@ function yellowcube_commerce_order_status_info() {
  * Shipping service callback: returns the base rate for a flat rate service.
  */
 function yellowcube_service_rate_order($shipping_service, $order) {
-//  xdebug_break();
-//  return array();
-  return array(
-    'amount' => 2000,
-    'currency_code' => 'USD',
-    'data' => array(),
-  );
+  if ($shipping_service['method'] === YELLOWCUBE_SHIPPING_USE_EXISTING) {
+    return array();
+  }
+
+  return $shipping_service['base_rate'];
 }
 
 /**
