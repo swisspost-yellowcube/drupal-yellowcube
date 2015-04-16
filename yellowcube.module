@@ -4,12 +4,54 @@
  * @file
  * YellowCube integration module for Drupal Commerce.
  */
+define('YELLOWCUBE_SHIPPING_ADD_NEW', 'add_new');
+define('YELLOWCUBE_SHIPPING_USE_EXISTING', 'use_existing');
 
 /**
  * Implements hook_menu().
  */
 function yellowcube_menu() {
   $items = array();
+
+  $items['admin/commerce/config/shipping/services/yellowcube/add'] = array(
+    'title' => 'Add a yellowcube shipping service',
+    'description' => 'Create a new yellowcube shipping service, including a title and base shipping rate.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yellowcube_shipping_service_form', commerce_flat_rate_service_new()),
+    'access arguments' => array('administer shipping'),
+    'type' => MENU_LOCAL_ACTION,
+    'context' => MENU_CONTEXT_PAGE,
+    'file' => 'includes/yellowcube_shipping_service.admin.inc',
+  );
+
+  foreach (commerce_shipping_services('yellowcube') as $name => $shipping_service) {
+    // Convert underscores to hyphens for the menu item argument.
+    $service_name_arg = 'yellowcube-' . strtr($name, '_', '-');
+
+    $items['admin/commerce/config/shipping/services/' . $service_name_arg . '/edit'] = array(
+      'title' => 'Edit',
+      'description' => 'Edit the YellowCube shipping service.',
+      'page callback' => 'yellowcube_shipping_service_edit_page',
+      'page arguments' => array($name),
+      'access arguments' => array('administer shipping'),
+      'type' => MENU_LOCAL_TASK,
+      'context' => MENU_CONTEXT_INLINE,
+      'weight' => 0,
+      'file' => 'includes/yellowcube_shipping_service.admin.inc',
+    );
+
+    $items['admin/commerce/config/shipping/services/' . $service_name_arg . '/delete'] = array(
+      'title' => 'Delete',
+      'description' => 'Delete the YellowCube shipping service.',
+      'page callback' => 'yellowcube_shipping_service_delete_page',
+      'page arguments' => array($name),
+      'access arguments' => array('administer shipping'),
+      'type' => MENU_LOCAL_TASK,
+      'context' => MENU_CONTEXT_INLINE,
+      'weight' => 10,
+      'file' => 'includes/yellowcube_shipping_service.admin.inc',
+    );
+  }
 
   $items['admin/commerce/config/shipping/yellowcube'] = array(
     'title' => 'YellowCube',
@@ -49,22 +91,244 @@ function yellowcube_commerce_shipping_method_info() {
 }
 
 /**
+ * Returns all or one YellowCube products.
+ *
+ * @param string $name Optional product name to get only one result.
+ *
+ * @return array
+ */
+function yellowcube_commerce_products($name = null) {
+  $products = array(
+    'postpac_eco' => array(
+      'title' => t('PostPac Economy'),
+      'basic' => 'ECO',
+      'additional' => ''
+    ),
+    'postpac_eco_signature'=> array(
+      'title' => t('PostPac Economy mit Unterschrift (SI)'),
+      'basic' => 'ECO',
+      'additional' => 'SI'
+    ),
+    'postpac_prio'=> array(
+      'title' => t('PostPac Priority'),
+      'basic' => 'PRI',
+      'additional' => ''
+    ),
+    'postpac_prio_signature'=> array(
+      'title' => t('PostPac Priority mit Unterschrift (SI)'),
+      'basic' => 'PRI',
+      'additional' => 'SI'
+    ),
+    'postpac_prio_signature_evening'=> array(
+      'title' => t('PostPac Priority SI Abendzustellung'),
+      'basic' => 'PRI',
+      'additional' => 'SI;AZ'
+    ),
+    'postpac_prio_signature_saturday'=> array(
+      'title' => t('PostPac Priority SI Samstagszustellung'),
+      'basic' => 'PRI',
+      'additional' => ''
+    ),
+    'pickup_apost'=> array(
+      'title' => t('Abholung A-Post'),
+      'basic' => 'PICKUP',
+      'additional' => 'APOST'
+    ),
+    'pickup_international_prio_gr'=> array(
+      'title' => t('Abholung International Priority Gross'),
+      'basic' => 'PICKUP',
+      'additional' => 'INTPRI;GR'
+    ),
+    'pickup_international_prio_mx'=> array(
+      'title' => t('Abholung International Priority Maxi'),
+      'basic' => 'PICKUP',
+      'additional' => 'INTPRI;MX'
+    ),
+    'pickup_international_eco_gr'=> array(
+      'title' => t('Abholung International Economy Gross'),
+      'basic' => 'PICKUP',
+      'additional' => 'INTECO;GR'
+    ),
+    'pickup_international_eco_mx'=> array(
+      'title' => t('Abholung International Economy Maxi'),
+      'basic' => 'PICKUP',
+      'additional' => 'INTECO;GR'
+    ),
+    'pickup_oftringen'=> array(
+      'title' => t('Abholung in Oftringen'),
+      'basic' => 'PICKUP',
+      'additional' => ''
+    ),
+  );
+
+  if (!empty($name)) {
+    return $products[$name];
+  }
+
+  return $products;
+}
+
+/**
+ * Returns a list of all product titles keyed by their name.
+ *
+ * @return array
+ */
+function yellowcube_shipping_service_product_titles() {
+  $options = array();
+  foreach (yellowcube_commerce_products() as $key => $product) {
+    $options[$key] = $product['title'];
+  }
+
+  return $options;
+}
+
+/**
+ * Returns a YellowCube product for given shipping service.
+ *
+ * @param $shipping_service
+ * @return array
+ */
+function yellowcube_commerce_product_for_shipping_service($shipping_service) {
+  if (!empty($shipping_service['product'])) {
+    return yellowcube_commerce_products($shipping_service['product']);
+  }
+
+  $service = db_query(
+    'SELECT * FROM {yellowcube_shipping_service} WHERE existing_machine_name = :name',
+    array('name' => $shipping_service['name'])
+  )->fetchAssoc();
+
+  if (empty($service)) {
+    return array();
+  }
+
+  return yellowcube_commerce_products($service['product']);
+}
+
+/**
  * Implements hook_commerce_shipping_service_info().
  */
 function yellowcube_commerce_shipping_service_info() {
   $services = array();
 
-  $services['yellowcube'] = array(
-    'title' => t('YellowCube'),
-    'display_title' => t('YellowCube'),
-    'description' => '',
-    'shipping_method' => 'yellowcube',
-    'callbacks' => array(
-      'rate' => 'yellowcube_service_rate_order',
-    ),
-  );
+  // Look for shipping ervices currently defined in the database.
+  $result = db_query('SELECT * FROM {yellowcube_shipping_service}')->fetchAllAssoc('name', PDO::FETCH_ASSOC);
+
+  if (!empty($result)) {
+    foreach ($result as $name => $service) {
+      // Create a base rate price array for the service
+      $base_rate = array(
+        'amount' => $service['amount'],
+        'currency_code' => $service['currency_code'],
+        'data' => array(
+        ),
+      );
+
+      // Unserialize the data array for the service.
+      $data = !empty($service['data']) ? unserialize($service['data']) : array();
+
+      $price_component_type = 'yellowcube_' . $name;
+
+      // If the data array specifies an included tax, include it now.
+      if (module_exists('commerce_tax') && !empty($data['include_tax']) && $tax_rate = commerce_tax_rate_load($data['include_tax'])) {
+        // Reverse apply the tax.
+        $tax_amount = $base_rate['amount'] - ($base_rate['amount'] / (1 + $tax_rate['rate']));
+        $tax_amount = commerce_tax_rate_round_amount($tax_rate, $tax_amount);
+
+        // Add a base price to the data array.
+        $component = array(
+          'amount' => $base_rate['amount'] - $tax_amount,
+          'currency_code' => $base_rate['currency_code'],
+          'data' => array(),
+        );
+
+        $base_rate['data'] = commerce_price_component_add($base_rate, $price_component_type, $component, TRUE, FALSE);
+
+        // Add the tax to the data array.
+        $component['amount'] = $tax_amount;
+        $component['data']['tax_rate'] = $tax_rate;
+
+        $base_rate['data'] = commerce_price_component_add($base_rate, $tax_rate['price_component'], $component, TRUE);
+      }
+
+      // Add the full service array to our return value.
+      $services[$name] = array(
+        'title' => $service['title'],
+        'display_title' => !empty($service['display_title']) ? $service['display_title'] : $service['title'],
+        'shipping_method' => 'yellowcube',
+        'price_component' => $price_component_type,
+        'callbacks' => array(
+          'rate' => 'yellowcube_service_rate_order',
+        ),
+        'base_rate' => $base_rate,
+        'method' => $service['method'],
+        'product' => $service['product'],
+        'existing_machine_name' => $service['existing_machine_name'],
+        'data' => $data,
+      );
+    }
+  }
 
   return $services;
+}
+
+/**
+ * Saves or updates a shipping service.
+ *
+ * @param $shipping_service
+ * @param bool $skip_reset
+ * @return bool|int
+ */
+function yellowcube_shipping_service_save($shipping_service, $skip_reset = FALSE) {
+  // Move the amount and currency code up a level in the service array.
+  if (!empty($shipping_service['base_rate'])) {
+    $shipping_service['amount'] = $shipping_service['base_rate']['amount'];
+    $shipping_service['currency_code'] = $shipping_service['base_rate']['currency_code'];
+  }
+
+  $op = drupal_write_record('yellowcube_shipping_service', $shipping_service, empty($shipping_service['is_new']) ? 'name' : array());
+
+  // Clear the necessary caches and rebuild the menu items.
+  if (!$skip_reset) {
+    commerce_shipping_services_reset();
+    entity_defaults_rebuild();
+    rules_clear_cache(TRUE);
+    menu_rebuild();
+  }
+
+  return $op;
+}
+
+/**
+ * Deletes a flat rate service.
+ *
+ * @param $name
+ *   The machine-name of the flat rate service.
+ * @param $skip_reset
+ *   Boolean indicating whether or not this delete should result in shipping
+ *   services being reset and the menu being rebuilt; defaults to FALSE. This is
+ *   useful when you intend to perform many deletions at once, as menu
+ *   rebuilding is very costly in terms of performance.
+ */
+function yellowcube_shipping_service_delete($name, $skip_reset = FALSE) {
+  $shipping_service = commerce_shipping_service_load($name);
+
+  db_delete('yellowcube_shipping_service')
+    ->condition('name', $name)
+    ->execute();
+
+  rules_config_delete(array('commerce_shipping_service_' . $name));
+
+  // Clear the necessary caches and rebuild the menu items.
+  if (!$skip_reset) {
+    commerce_shipping_services_reset();
+    entity_defaults_rebuild();
+    rules_clear_cache(TRUE);
+    menu_rebuild();
+  }
+
+  // Notify other modules that this flat rate service has been deleted.
+  module_invoke_all('yellowcube_shipping_service_delete', $shipping_service, $skip_reset);
 }
 
 /**
@@ -125,7 +389,11 @@ function yellowcube_commerce_order_status_info() {
  * Shipping service callback: returns the base rate for a flat rate service.
  */
 function yellowcube_service_rate_order($shipping_service, $order) {
-  return array();
+  if ($shipping_service['method'] === YELLOWCUBE_SHIPPING_USE_EXISTING) {
+    return array();
+  }
+
+  return $shipping_service['base_rate'];
 }
 
 /**
