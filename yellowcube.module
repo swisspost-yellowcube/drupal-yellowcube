@@ -17,7 +17,7 @@ function yellowcube_menu() {
     'title' => 'Add a yellowcube shipping service',
     'description' => 'Create a new yellowcube shipping service, including a title and base shipping rate.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('yellowcube_shipping_service_form', commerce_flat_rate_service_new()),
+    'page arguments' => array('yellowcube_shipping_service_form', yellowcube_commerce_shipping_service_new()),
     'access arguments' => array('administer shipping'),
     'type' => MENU_LOCAL_ACTION,
     'context' => MENU_CONTEXT_PAGE,
@@ -180,6 +180,25 @@ function yellowcube_shipping_service_product_titles() {
   }
 
   return $options;
+}
+
+/**
+ * Returns an initialized yellowcube shipping service array for forms.
+ */
+function yellowcube_commerce_shipping_service_new() {
+  return array(
+    'name' => '',
+    'title' => '',
+    'display_title' => '',
+    'product' => '',
+    'base_rate' => array(
+      'amount' => 0,
+      'currency_code' => commerce_default_currency(),
+      'data' => array(),
+    ),
+    'data' => array(),
+    'is_new' => TRUE,
+  );
 }
 
 /**
