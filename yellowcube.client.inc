@@ -36,10 +36,8 @@ function yellowcube_client_get_config() {
   );
 
   //Certificate handling
-  if(in_array($operation_mode, array('P', 'D'))) {
-    if (!empty($cert_path) && file_exists($cert_path)) {
-      $config->setCertificateFilePath($cert_path, variable_get('yellowcube_password'));
-    }
+  if (!empty($cert_path)) {
+    $config->setCertificateFilePath($cert_path, variable_get('yellowcube_password'));
   }
 
   return $config;
