@@ -145,6 +145,11 @@ function yellowcube_admin_settings_form_validate($form, &$form_state) {
   if ($form_state['values']['yellowcube_mode'] === 'P' && empty($form_state['values']['yellowcube_certificate'])) {
     form_set_error('yellowcube_certificate', t('When using the production mode you have to configure a certificate.'));
   }
+
+  // Ensure the certificate file exists if it is set.
+  if (!empty($form_state['values']['yellowcube_certificate']) && !file_exists($form_state['values']['yellowcube_certificate'])) {
+    form_set_error('yellowcube_certificate', t('The certificate provided does not exist.'));
+  }
 }
 
 /**
