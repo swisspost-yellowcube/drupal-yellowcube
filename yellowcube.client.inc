@@ -198,6 +198,51 @@ function yellowcube_client_update_product($sku) {
 }
 
 /**
+ * Returns a partner reference in format "FL-PLZ (customer no)", e.g. PM-8004 (33).
+ *
+ * FL = first name, last name
+ * PLZ = postal code
+ *
+ * @param array $ship_addr
+ *
+ * @return string Partner reference.
+ */
+function yellowcube_client_get_partner_reference(array $ship_addr, stdClass $order) {
+    $partner_reference = yellowcube_client_name_initials($ship_addr);
+
+    if (!empty($ship_addr['postal_code'])) {
+        $partner_reference .= '-' . $ship_addr['postal_code'];
+    }
+
+    if (!empty($order->commerce_customer_billing['und'][0]['profile_id'])) {
+        $partner_reference .= ' (' . $order->commerce_customer_billing['und'][0]['profile_id'] . ')';
+    }
+
+    return $partner_reference;
+}
+
+/**
+ * Returns the initials of the name in the shipping address.
+ *
+ * @param array $ship_addr
+ *
+ * @return string Uppercase initials, e.g. PM.
+ */
+function yellowcube_client_name_initials(array $ship_addr) {
+    $initials = '';
+
+    if (!empty($ship_addr['first_name'][0])) {
+        $initials .= $ship_addr['first_name'][0];
+    }
+
+    if (!empty($ship_addr['name_line'][0])) {
+        $initials .= $ship_addr['name_line'][0];
+    }
+
+    return strtoupper($initials);
+}
+
+/**
  * Send order to YellowCube.
  *
  * @param array $ship_addr
@@ -215,7 +260,7 @@ function yellowcube_client_add_order(array $ship_addr, array $yc_product, stdCla
   $partner
     ->setPartnerType('WE')
     ->setPartnerNo(variable_get('yellowcube_partner', ''))
-    ->setPartnerReference('Liip AG')
+    ->setPartnerReference(yellowcube_client_get_partner_reference($ship_addr, $order))
     ->setName1($ship_addr['name_line'])
     ->setName2($ship_addr['premise'])
     ->setStreet($ship_addr['thoroughfare'])
