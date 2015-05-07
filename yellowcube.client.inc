@@ -229,17 +229,17 @@ function yellowcube_client_get_partner_reference(array $ship_addr, stdClass $ord
  * @return string Uppercase initials, e.g. PM.
  */
 function yellowcube_client_name_initials(array $ship_addr) {
-    $initials = '';
+    $initials = array();
 
-    if (!empty($ship_addr['first_name'][0])) {
-        $initials .= $ship_addr['first_name'][0];
+    $names = explode(' ', $ship_addr['name_line'], 2);
+
+    foreach ($names as $name) {
+        if (!empty($name['0'])) {
+            $initials[] = $name[0];
+        }
     }
 
-    if (!empty($ship_addr['name_line'][0])) {
-        $initials .= $ship_addr['name_line'][0];
-    }
-
-    return strtoupper($initials);
+    return strtoupper(join('', $initials));
 }
 
 /**
@@ -275,6 +275,7 @@ function yellowcube_client_add_order(array $ship_addr, array $yc_product, stdCla
     ->setOrderHeader(new OrderHeader(variable_get('yellowcube_depositor', ''), $order->order_id, date('Ymd', REQUEST_TIME)))
     ->setPartnerAddress($partner)
     ->setOrderDocumentsFlag(FALSE);
+    xdebug_break();
 
   $yc_order->addValueAddedService(new BasicShippingServices($yc_product['basic']));
   if (!empty($yc_product['additional'])) {
