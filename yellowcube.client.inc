@@ -275,7 +275,6 @@ function yellowcube_client_add_order(array $ship_addr, array $yc_product, stdCla
     ->setOrderHeader(new OrderHeader(variable_get('yellowcube_depositor', ''), $order->order_id, date('Ymd', REQUEST_TIME)))
     ->setPartnerAddress($partner)
     ->setOrderDocumentsFlag(FALSE);
-    xdebug_break();
 
   $yc_order->addValueAddedService(new BasicShippingServices($yc_product['basic']));
   if (!empty($yc_product['additional'])) {
