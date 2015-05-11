@@ -14,8 +14,8 @@ function yellowcube_menu() {
   $items = array();
 
   $items['admin/commerce/config/shipping/services/yellowcube/add'] = array(
-    'title' => 'Add a yellowcube shipping service',
-    'description' => 'Create a new yellowcube shipping service, including a title and base shipping rate.',
+    'title' => 'Add a YellowCube shipping service',
+    'description' => 'Create a new YellowCube shipping service, including a title and base shipping rate.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('yellowcube_shipping_service_form', yellowcube_commerce_shipping_service_new()),
     'access arguments' => array('administer shipping'),
