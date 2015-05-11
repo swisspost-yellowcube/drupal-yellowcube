@@ -4,8 +4,12 @@
  * Glue code for interacting with the yellowcube-php library.
  */
 
-// Load the yellowcube-php via the autoload script provided by composer.
-require 'vendor/autoload.php';
+// Load the yellowcube-php via the autoload script provided by composer or composer manager.
+if (file_exists('vendor/autoload.php')) {
+    require 'vendor/autoload.php';
+} else {
+    composer_manager_register_autoloader();
+}
 
 use YellowCube\ART\Article;
 use YellowCube\ART\ChangeFlag;
