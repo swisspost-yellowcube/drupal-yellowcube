@@ -268,7 +268,7 @@ function yellowcube_client_add_order(array $ship_addr, array $yc_product, stdCla
     ->setZIPCode($ship_addr['postal_code'])
     ->setCity($ship_addr['locality'])
     ->setEmail($order->mail)
-    ->setLanguageCode('en');
+    ->setLanguageCode($GLOBALS['language']->language);
 
   $yc_order = new Order();
   $yc_order
