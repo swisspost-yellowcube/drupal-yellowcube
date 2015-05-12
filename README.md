@@ -20,7 +20,7 @@ It would be nice to link to the Github release page for change descriptions.
 
 [Drupal]: https://www.drupal.org/
 [Drupal Commerce]: https://drupalcommerce.org/
-[Drupal YellowCube module page]: (https://www.drupal.org/project/yellowcube)
+[Drupal YellowCube module page]: https://www.drupal.org/project/yellowcube
 [Drupal module release page]: https://www.drupal.org/node/add/project-release/2486667
 [Github release page]: https://github.com/swisspost-yellowcube/drupal-yellowcube/releases
 [YellowCube]: http://yellowcube.ch/
