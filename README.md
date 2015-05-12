@@ -4,23 +4,8 @@ Drupal YellowCube module
 [Drupal][] module for [YellowCube][] integration with
 [Drupal Commerce][].
 
-## Installation
+For installation instructions and documentation please see the [Drupal YellowCube module page]().
 
-This module uses [Composer](https://getcomposer.org/) to install dependencies
-using the [composer_manager](https://www.drupal.org/project/composer_manager) module.
-
-To install the YellowCube Drupal module with Drush run:
-
-```
-drush dl -y yellowcube
-drush en -y yellowcube
-```
-
-## Configuration
-
-#### Enable stock management
-
-In order to use the YellowCube module, you have to enable Commerce Simple Stock for your product type.
 
 ## Development
 
@@ -35,6 +20,8 @@ It would be nice to link to the Github release page for change descriptions.
 
 [Drupal]: https://www.drupal.org/
 [Drupal Commerce]: https://drupalcommerce.org/
+[Drupal YellowCube module page]: (https://www.drupal.org/project/yellowcube)
 [Drupal module release page]: https://www.drupal.org/node/add/project-release/2486667
 [Github release page]: https://github.com/swisspost-yellowcube/drupal-yellowcube/releases
 [YellowCube]: http://yellowcube.ch/
+
