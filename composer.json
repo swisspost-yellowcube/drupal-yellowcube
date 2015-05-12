@@ -12,6 +12,6 @@
   ],
 
   "require": {
-    "swisspost-yellowcube/yellowcube-php": "~1.0"
+    "swisspost-yellowcube/yellowcube-php": "~2.0"
   }
 }

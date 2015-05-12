@@ -5,8 +5,9 @@
  */
 
 // Load the yellowcube-php via the autoload script provided by composer or composer manager.
-if (file_exists('vendor/autoload.php')) {
-    require 'vendor/autoload.php';
+$localAutoloader = __DIR__ . '/vendor/autoload.php';
+if (file_exists($localAutoloader)) {
+    require $localAutoloader;
 } else {
     composer_manager_register_autoloader();
 }
@@ -54,10 +55,15 @@ function yellowcube_client_get_config() {
  */
 function yellowcube_client_get_service() {
   $service = new YellowCube\Service(yellowcube_client_get_config());
-
   $minLogLevel = variable_get('yellowcube_log_level', '');
+
   if (!empty($minLogLevel)) {
-    $service->setLogger(new \YellowCube\Util\Logger\WatchdogLogger('yellowcube', $minLogLevel));
+    $logger = new \YellowCube\Util\Logger\MinLevelFilterLogger(
+      $minLogLevel,
+      new YellowCubeWatchdogLogger('yellowcube')
+    );
+
+    $service->setLogger($logger);
   }
 
   return $service;

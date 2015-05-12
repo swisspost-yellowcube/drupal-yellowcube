@@ -13,6 +13,7 @@ dependencies[] = entity
 dependencies[] = physical
 dependencies[] = rules
 configure = admin/commerce/config/shipping/yellowcube
+files[] = includes/yellowcube.logger.inc
 features[features_api][] = api:2
 features[rules_config][] = rules_yellowcube_send_orders
 features[rules_config][] = rules_yellowcube_send_product_data
