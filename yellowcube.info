@@ -10,6 +10,7 @@ dependencies[] = commerce_stock
 dependencies[] = commerce_ss
 dependencies[] = composer_manager
 dependencies[] = entity
+dependencies[] = locale
 dependencies[] = physical
 dependencies[] = rules
 configure = admin/commerce/config/shipping/yellowcube
