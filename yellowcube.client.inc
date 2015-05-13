@@ -28,11 +28,6 @@ use YellowCube\WAB\Position;
  * @return \YellowCube\Config
  */
 function yellowcube_client_get_config() {
-
-  $operation_mode = variable_get('yellowcube_mode', 'test');
-
-  $cert_path = variable_get('yellowcube_certificate', '');
-
   $config = new YellowCube\Config(
     variable_get('yellowcube_sender', ''),
     variable_get('yellowcube_endpoint', ''),
@@ -40,12 +35,43 @@ function yellowcube_client_get_config() {
     variable_get('yellowcube_mode', 'T')
   );
 
+  $cert_path = variable_get('yellowcube_certificate', '');
+
   //Certificate handling
   if (!empty($cert_path)) {
     $config->setCertificateFilePath($cert_path, variable_get('yellowcube_password'));
   }
 
   return $config;
+}
+
+/**
+ * Returns true if the connection to YellowCube succeeds for the given config.
+ *
+ * @param array $credentials
+ * @return bool True if connection succeeds, false otherwise.
+ */
+function yellowcube_client_validate_connection(array $credentials) {
+  $config = new YellowCube\Config(
+    $credentials['yellowcube_sender'],
+    $credentials['yellowcube_endpoint'],
+    null,
+    $credentials['yellowcube_mode']
+  );
+
+  if (!empty($credentials['yellowcube_certificate'])) {
+    $config->setCertificateFilePath($credentials['yellowcube_certificate'], $credentials['yellowcube_password']);
+  }
+
+  try {
+    $service = new YellowCube\Service($config);
+
+    // A array response means that the connection worked and there is a result.
+    return is_array($service->getInventory());
+  } catch(Exception $e)  {
+  }
+
+  return false;
 }
 
 /**
