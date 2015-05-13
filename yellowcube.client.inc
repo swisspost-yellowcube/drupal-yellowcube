@@ -278,7 +278,11 @@ function yellowcube_client_add_order(array $ship_addr, array $yc_product, stdCla
     ->setZIPCode($ship_addr['postal_code'])
     ->setCity($ship_addr['locality'])
     ->setEmail($order->mail)
-    ->setLanguageCode($GLOBALS['language']->language);
+    // A user is created for each (anonymous) order. Get the language of that user.
+    // (The language property contains a ISO language code).
+    // If there is no language configured, this returns en (english).
+    ->setLanguageCode(user_preferred_language($order->uid)->language);
+
 
   $yc_order = new Order();
   $yc_order
