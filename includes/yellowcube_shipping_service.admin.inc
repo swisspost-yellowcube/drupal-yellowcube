@@ -5,7 +5,6 @@
  * Contains the administrative page and form callbacks for the Flat Rate module.
  */
 
-
 /**
  * Builds the form for adding and editing yellowcube.
  */
@@ -26,7 +25,7 @@ function yellowcube_shipping_service_form($form, &$form_state, $shipping_service
     '#type' => 'select',
     '#title' => t('YellowCube Product'),
     '#options' => yellowcube_shipping_service_product_titles(),
-    '#default_value' => !empty($shipping_service['product']) ? $shipping_service['product'] : null,
+    '#default_value' => !empty($shipping_service['product']) ? $shipping_service['product'] : NULL,
     '#description' => t('The YellowCube product you would like to use as shipping service.'),
     '#required' => TRUE,
   );
@@ -39,7 +38,6 @@ function yellowcube_shipping_service_form($form, &$form_state, $shipping_service
       'use_existing' => t('Use an existing shipping service'),
     ),
     '#default_value' => $current_method,
-    '#description' => t(''),
     '#required' => TRUE,
     '#ajax' => array(
       'callback' => 'yellowcube_shipping_service_method_callback',
@@ -58,13 +56,15 @@ function yellowcube_shipping_service_form($form, &$form_state, $shipping_service
 
   $method = !empty($form_state['values']['shipping_service']['method']) ? $form_state['values']['shipping_service']['method'] : $current_method;
 
-  switch($method) {
+  switch ($method) {
     case YELLOWCUBE_SHIPPING_ADD_NEW:
       $form['detail'] = yellowcube_shipping_service_add_new_form($form, $form_state);
       break;
+
     case YELLOWCUBE_SHIPPING_USE_EXISTING:
       $form['detail'] = yellowcube_shipping_service_use_existing_form($form, $form_state);
       break;
+
     default:
       throw new InvalidArgumentException('Unknown method' . $method);
   };
@@ -100,7 +100,9 @@ function yellowcube_shipping_service_form($form, &$form_state, $shipping_service
  * Returns the detail form.
  *
  * @return array
- * @throws \InvalidArgumentException if no method is given.
+ *
+ * @throws \InvalidArgumentException
+ *   If no method is given.
  */
 function yellowcube_shipping_service_method_callback($form, &$form_state) {
   return $form['detail'];
@@ -189,7 +191,7 @@ function yellowcube_shipping_service_use_existing_form($form, &$form_state) {
     '#type' => 'select',
     '#title' => t('Existing shipping service'),
     '#options' => commerce_shipping_service_get_title(),
-    '#default_value' => !empty($shipping_service['existing_machine_name']) ? $shipping_service['existing_machine_name'] : null,
+    '#default_value' => !empty($shipping_service['existing_machine_name']) ? $shipping_service['existing_machine_name'] : NULL,
     '#description' => t('The shipping service the YellowCube product should be mapped to.'),
     '#required' => TRUE,
   );
@@ -233,6 +235,7 @@ function yellowcube_shipping_service_form_submit($form, &$form_state) {
       $shipping_service['title'] = $service['product'] . '_' . $detail['existing_machine_name'];
       $shipping_service['existing_machine_name'] = $detail['existing_machine_name'];
       break;
+
     case YELLOWCUBE_SHIPPING_ADD_NEW:
       foreach (array('name', 'title', 'display_title', 'amount', 'currency_code') as $key) {
         $shipping_service[$key] = $form_state['values']['detail'][$key];

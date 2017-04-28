@@ -24,4 +24,3 @@ It would be nice to link to the Github release page for change descriptions.
 [Drupal module release page]: https://www.drupal.org/node/add/project-release/2486667
 [Github release page]: https://github.com/swisspost-yellowcube/drupal-yellowcube/releases
 [YellowCube]: http://yellowcube.ch/
-

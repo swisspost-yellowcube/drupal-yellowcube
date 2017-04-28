@@ -4,6 +4,7 @@
  * @file
  * YellowCube integration module for Drupal Commerce.
  */
+
 define('YELLOWCUBE_SHIPPING_ADD_NEW', 'add_new');
 define('YELLOWCUBE_SHIPPING_USE_EXISTING', 'use_existing');
 
@@ -93,71 +94,72 @@ function yellowcube_commerce_shipping_method_info() {
 /**
  * Returns all or one YellowCube products.
  *
- * @param string $name Optional product name to get only one result.
+ * @param string $name
+ *   Optional product name to get only one result.
  *
  * @return array
  */
-function yellowcube_commerce_products($name = null) {
+function yellowcube_commerce_products($name = NULL) {
   $products = array(
     'postpac_eco' => array(
       'title' => t('PostPac Economy'),
       'basic' => 'ECO',
-      'additional' => ''
+      'additional' => '',
     ),
-    'postpac_eco_signature'=> array(
+    'postpac_eco_signature' => array(
       'title' => t('PostPac Economy mit Unterschrift (SI)'),
       'basic' => 'ECO',
-      'additional' => 'SI'
+      'additional' => 'SI',
     ),
-    'postpac_prio'=> array(
+    'postpac_prio' => array(
       'title' => t('PostPac Priority'),
       'basic' => 'PRI',
-      'additional' => ''
+      'additional' => '',
     ),
-    'postpac_prio_signature'=> array(
+    'postpac_prio_signature' => array(
       'title' => t('PostPac Priority mit Unterschrift (SI)'),
       'basic' => 'PRI',
-      'additional' => 'SI'
+      'additional' => 'SI',
     ),
-    'postpac_prio_signature_evening'=> array(
+    'postpac_prio_signature_evening' => array(
       'title' => t('PostPac Priority SI Abendzustellung'),
       'basic' => 'PRI',
-      'additional' => 'SI;AZ'
+      'additional' => 'SI;AZ',
     ),
-    'postpac_prio_signature_saturday'=> array(
+    'postpac_prio_signature_saturday' => array(
       'title' => t('PostPac Priority SI Samstagszustellung'),
       'basic' => 'PRI',
-      'additional' => ''
+      'additional' => '',
     ),
-    'pickup_apost'=> array(
+    'pickup_apost' => array(
       'title' => t('Abholung A-Post'),
       'basic' => 'PICKUP',
-      'additional' => 'APOST'
+      'additional' => 'APOST',
     ),
-    'pickup_international_prio_gr'=> array(
+    'pickup_international_prio_gr' => array(
       'title' => t('Abholung International Priority Gross'),
       'basic' => 'PICKUP',
-      'additional' => 'INTPRI;GR'
+      'additional' => 'INTPRI;GR',
     ),
-    'pickup_international_prio_mx'=> array(
+    'pickup_international_prio_mx' => array(
       'title' => t('Abholung International Priority Maxi'),
       'basic' => 'PICKUP',
-      'additional' => 'INTPRI;MX'
+      'additional' => 'INTPRI;MX',
     ),
-    'pickup_international_eco_gr'=> array(
+    'pickup_international_eco_gr' => array(
       'title' => t('Abholung International Economy Gross'),
       'basic' => 'PICKUP',
-      'additional' => 'INTECO;GR'
+      'additional' => 'INTECO;GR',
     ),
-    'pickup_international_eco_mx'=> array(
+    'pickup_international_eco_mx' => array(
       'title' => t('Abholung International Economy Maxi'),
       'basic' => 'PICKUP',
-      'additional' => 'INTECO;GR'
+      'additional' => 'INTECO;GR',
     ),
-    'pickup_oftringen'=> array(
+    'pickup_oftringen' => array(
       'title' => t('Abholung in Oftringen'),
       'basic' => 'PICKUP',
-      'additional' => ''
+      'additional' => '',
     ),
   );
 
@@ -205,6 +207,7 @@ function yellowcube_commerce_shipping_service_new() {
  * Returns a YellowCube product for given shipping service.
  *
  * @param $shipping_service
+ *
  * @return array
  */
 function yellowcube_commerce_product_for_shipping_service($shipping_service) {
@@ -235,12 +238,11 @@ function yellowcube_commerce_shipping_service_info() {
 
   if (!empty($result)) {
     foreach ($result as $name => $service) {
-      // Create a base rate price array for the service
+      // Create a base rate price array for the service.
       $base_rate = array(
         'amount' => $service['amount'],
         'currency_code' => $service['currency_code'],
-        'data' => array(
-        ),
+        'data' => array(),
       );
 
       // Unserialize the data array for the service.
@@ -296,6 +298,7 @@ function yellowcube_commerce_shipping_service_info() {
  *
  * @param $shipping_service
  * @param bool $skip_reset
+ *
  * @return bool|int
  */
 function yellowcube_shipping_service_save($shipping_service, $skip_reset = FALSE) {
@@ -416,7 +419,7 @@ function yellowcube_service_rate_order($shipping_service, $order) {
 }
 
 /**
- * Product data transmission batch definition: ART
+ * Product data transmission batch definition: ART.
  */
 function yellowcube_batch_send_data() {
 
@@ -438,7 +441,7 @@ function yellowcube_batch_send_data() {
   );
 
   $operations = array();
-  foreach($products as $product) {
+  foreach ($products as $product) {
     $operations[] = array(
       'yellowcube_batch_operation_send_product', array($product),
     );
@@ -456,20 +459,20 @@ function yellowcube_batch_send_data() {
 }
 
 /**
- *  Batch operation for sending data ART
+ * Batch operation for sending data ART.
  */
 function yellowcube_batch_operation_send_product($current_product, &$context) {
   module_load_include('client.inc', 'yellowcube');
 
-  //load the product and send it to yellowcube
+  // Load the product and send it to yellowcube.
   $product = commerce_product_load($current_product->product_id, NULL, TRUE);
   yellowcube_client_update_product($product->sku);
   $context['results'][] = $product->sku . ' : ' . check_plain($product->title);
-  $context['message'] = t('Now processing %product: %sku', array('%product' => check_plain($product->title), '%sku' => $product->sku));
+  $context['message'] = t('Now processing %product: %sku', array('%product' => $product->title, '%sku' => $product->sku));
 }
 
 /**
- * Batch 'finished' callback used for sending data
+ * Batch 'finished' callback used for sending data.
  */
 function yellowcube_batch_send_data_finished($success, $results, $operations) {
   if ($success) {
@@ -491,12 +494,12 @@ function yellowcube_batch_send_data_finished($success, $results, $operations) {
 }
 
 /**
- * Product data transmission batch definition: ART
+ * Product data transmission batch definition: ART.
  */
 function yellowcube_batch_fetch_inventory_data() {
   $service = yellowcube_client_get_service();
 
-  //Get all stock items from yellowcube
+  // Get all stock items from yellowcube.
   $stock_items = $service->getInventory();
 
   $product_count = count($stock_items);
@@ -511,10 +514,11 @@ function yellowcube_batch_fetch_inventory_data() {
   );
 
   $operations = array();
-  foreach($stock_items as $product){
+  foreach ($stock_items as $product) {
     $operations[] = array(
       'yellowcube_batch_operation_update_stock', array(
-        array('art-no' => $product->getArticleNo(), 'qty' => $product->getQuantityUOM()->get())),
+        array('art-no' => $product->getArticleNo(), 'qty' => $product->getQuantityUOM()->get()),
+      ),
     );
   }
   $batch = array(
@@ -530,20 +534,20 @@ function yellowcube_batch_fetch_inventory_data() {
 }
 
 /**
- *  Batch operation for sending data ART
+ * Batch operation for sending data ART.
  */
 function yellowcube_batch_operation_update_stock($stock_item, &$context) {
   module_load_include('jobs.inc', 'yellowcube');
   $article_no = $stock_item['art-no'];
 
-  //unfortunately, not all stock items have an article number
+  // unfortunately, not all stock items have an article number.
   if (!empty($article_no)) {
 
-    //We try to find the according product in our shop
+    // We try to find the according product in our shop.
     $product = commerce_product_load_by_sku($article_no);
 
     if ($product) {
-      //Check pending stock items and subtract them, because yellowcube is not yet up-to-date.
+      // Check pending stock items and subtract them, because yellowcube is not yet up-to-date.
       $pending_stock = yellowcube_jobs_get_pending_stock($product);
       yellowcube_stock_adjust($product, $stock_item['qty'] - $pending_stock);
     }
@@ -559,9 +563,9 @@ function yellowcube_stock_adjust($product, $new_stock) {
     return;
   }
 
-  //only update stock and display a message if the stock level differs
-  $old_stock = $product->commerce_stock['und'][0]['value'];
-  if($old_stock != $new_stock) {
+  // Only update stock and display a message if the stock level differs.
+  $old_stock = $product->commerce_stock[LANGUAGE_NONE][0]['value'];
+  if ($old_stock != $new_stock) {
 
     $wrapper = entity_metadata_wrapper('commerce_product', $product);
     $wrapper->commerce_stock->set($new_stock);
@@ -572,7 +576,7 @@ function yellowcube_stock_adjust($product, $new_stock) {
         '%sku' => $product->sku,
         '%fromamount' => $old_stock,
         '%amount' => $new_stock,
-        ));
+      ));
 
       drupal_set_message(
         t(
@@ -589,9 +593,8 @@ function yellowcube_stock_adjust($product, $new_stock) {
   }
 }
 
-
 /**
- * Batch 'finished' callback used for sending data
+ * Batch 'finished' callback used for sending data.
  */
 function yellowcube_batch_fetch_inventory_finished($success, $results, $operations) {
   if ($success) {

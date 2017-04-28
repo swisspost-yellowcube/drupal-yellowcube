@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Glue code for interacting with the yellowcube-php library.
@@ -6,11 +7,15 @@
 
 // Load the yellowcube-php via the autoload script provided by composer or composer manager.
 if (file_exists('vendor/autoload.php')) {
-    require 'vendor/autoload.php';
-} else {
-    composer_manager_register_autoloader();
+  require 'vendor/autoload.php';
+}
+else {
+  composer_manager_register_autoloader();
 }
 
+use YellowCube\Util\Logger\WatchdogLogger;
+use YellowCube\Service;
+use YellowCube\Config;
 use YellowCube\ART\Article;
 use YellowCube\ART\ChangeFlag;
 use YellowCube\ART\UnitsOfMeasure\ISO;
@@ -27,19 +32,16 @@ use YellowCube\WAB\Position;
  * @return \YellowCube\Config
  */
 function yellowcube_client_get_config() {
-
-  $operation_mode = variable_get('yellowcube_mode', 'test');
-
   $cert_path = variable_get('yellowcube_certificate', '');
 
-  $config = new YellowCube\Config(
+  $config = new Config(
     variable_get('yellowcube_sender', ''),
     variable_get('yellowcube_endpoint', ''),
-    null,
+    NULL,
     variable_get('yellowcube_mode', 'T')
   );
 
-  //Certificate handling
+  // Certificate handling.
   if (!empty($cert_path)) {
     $config->setCertificateFilePath($cert_path, variable_get('yellowcube_password'));
   }
@@ -53,11 +55,11 @@ function yellowcube_client_get_config() {
  * @return YellowCube\Service
  */
 function yellowcube_client_get_service() {
-  $service = new YellowCube\Service(yellowcube_client_get_config());
+  $service = new Service(yellowcube_client_get_config());
 
   $minLogLevel = variable_get('yellowcube_log_level', '');
   if (!empty($minLogLevel)) {
-    $service->setLogger(new \YellowCube\Util\Logger\WatchdogLogger('yellowcube', $minLogLevel));
+    $service->setLogger(new WatchdogLogger('yellowcube', $minLogLevel));
   }
 
   return $service;
@@ -75,7 +77,7 @@ function yellowcube_client_get_service() {
 function yellowcube_client_update_product($sku) {
   $product = commerce_product_load_by_sku($sku);
 
-  $article = new Article;
+  $article = new Article();
   $article
     ->setChangeFlag(ChangeFlag::INSERT)
     ->setPlantID(variable_get('yellowcube_plant', ''))
@@ -85,7 +87,7 @@ function yellowcube_client_update_product($sku) {
     ->setAlternateUnitISO(ISO::PCE)
     ->addArticleDescription($product->title, 'de');
 
-  //Enable / Disable product based on the status
+  // Enable / Disable product based on the status.
   switch ($product->status) {
     case FALSE:
       $article->setChangeFlag(ChangeFlag::DEACTIVATE);
@@ -95,56 +97,59 @@ function yellowcube_client_update_product($sku) {
       $article->setChangeFlag(ChangeFlag::INSERT);
   }
 
-  //Setting the weight
-  if (!empty($product->field_weight['und'][0]['weight'])) {
-    $weight_unit = $product->field_weight['und'][0]['unit'];
+  // Setting the weight.
+  if (!empty($product->field_weight[LANGUAGE_NONE][0]['weight'])) {
+    $weight_unit = $product->field_weight[LANGUAGE_NONE][0]['unit'];
 
     switch ($weight_unit) {
       case 'kg':
         $weight_unit_iso = ISO::KGM;
         break;
+
       case 'g':
         $weight_unit_iso = ISO::GRM;
         break;
+
       default:
         $weight_unit_iso = ISO::KGM;
     }
 
-    $article->setNetWeight(round($product->field_weight['und'][0]['weight'], 3), $weight_unit_iso);
+    $article->setNetWeight(round($product->field_weight[LANGUAGE_NONE][0]['weight'], 3), $weight_unit_iso);
 
-    // Gross weight with tara factor
+    // Gross weight with tara factor.
     $tara_factor = variable_get('yellowcube_tara_factor', '1.1');
-    $article->setGrossWeight(round($product->field_weight['und'][0]['weight'] * $tara_factor, 3), $weight_unit_iso);
+    $article->setGrossWeight(round($product->field_weight[LANGUAGE_NONE][0]['weight'] * $tara_factor, 3), $weight_unit_iso);
 
   }
 
-  //Setting the dimensions
-  if (!empty($product->field_dimensions['und'][0]['unit'])) {
-    $dimension_unit = $product->field_dimensions['und'][0]['unit'];
+  // Setting the dimensions.
+  if (!empty($product->field_dimensions[LANGUAGE_NONE][0]['unit'])) {
+    $dimension_unit = $product->field_dimensions[LANGUAGE_NONE][0]['unit'];
 
     switch ($dimension_unit) {
       case 'm':
         $dimension_unit = ISO::MTR;
         $volume_unit = ISO::MTQ;
         break;
+
       case 'cm':
         $dimension_unit = ISO::CMT;
         $volume_unit = ISO::CMQ;
         break;
+
       default:
         $dimension_unit = ISO::MTR;
         $volume_unit = ISO::MTQ;
     }
 
-    $length = round($product->field_dimensions['und'][0]['length'], 3);
-    $width = round($product->field_dimensions['und'][0]['width'], 3);
-    $height = round($product->field_dimensions['und'][0]['height'], 3);
+    $length = round($product->field_dimensions[LANGUAGE_NONE][0]['length'], 3);
+    $width = round($product->field_dimensions[LANGUAGE_NONE][0]['width'], 3);
+    $height = round($product->field_dimensions[LANGUAGE_NONE][0]['height'], 3);
     $article->setLength($length, $dimension_unit);
     $article->setWidth($width, $dimension_unit);
     $article->setHeight($height, $dimension_unit);
     $article->setVolume(round($width * $height * $length, 3), $volume_unit);
   }
-
 
   $response = yellowcube_client_get_service()->insertArticleMasterData($article);
 
@@ -205,24 +210,24 @@ function yellowcube_client_update_product($sku) {
  * Returns a partner reference in format "FL-PLZ (customer no)", e.g. PM-8004 (33).
  *
  * FL = first name, last name
- * PLZ = postal code
+ * PLZ = postal code.
  *
  * @param array $ship_addr
  *
  * @return string Partner reference.
  */
 function yellowcube_client_get_partner_reference(array $ship_addr, stdClass $order) {
-    $partner_reference = yellowcube_client_name_initials($ship_addr);
+  $partner_reference = yellowcube_client_name_initials($ship_addr);
 
-    if (!empty($ship_addr['postal_code'])) {
-        $partner_reference .= '-' . $ship_addr['postal_code'];
-    }
+  if (!empty($ship_addr['postal_code'])) {
+    $partner_reference .= '-' . $ship_addr['postal_code'];
+  }
 
-    if (!empty($order->commerce_customer_billing['und'][0]['profile_id'])) {
-        $partner_reference .= ' (' . $order->commerce_customer_billing['und'][0]['profile_id'] . ')';
-    }
+  if (!empty($order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'])) {
+    $partner_reference .= ' (' . $order->commerce_customer_billing[LANGUAGE_NONE][0]['profile_id'] . ')';
+  }
 
-    return $partner_reference;
+  return $partner_reference;
 }
 
 /**
@@ -233,17 +238,17 @@ function yellowcube_client_get_partner_reference(array $ship_addr, stdClass $ord
  * @return string Uppercase initials, e.g. PM.
  */
 function yellowcube_client_name_initials(array $ship_addr) {
-    $initials = array();
+  $initials = array();
 
-    $names = explode(' ', $ship_addr['name_line'], 2);
+  $names = explode(' ', $ship_addr['name_line'], 2);
 
-    foreach ($names as $name) {
-        if (!empty($name['0'])) {
-            $initials[] = $name[0];
-        }
+  foreach ($names as $name) {
+    if (!empty($name['0'])) {
+      $initials[] = $name[0];
     }
+  }
 
-    return strtoupper(join('', $initials));
+  return strtoupper(join('', $initials));
 }
 
 /**
@@ -253,7 +258,7 @@ function yellowcube_client_name_initials(array $ship_addr) {
  *   Shipping address, in array format available on the customer profile.
  * @param array $yc_product
  *   YellowCube product array.
- * @param stdClass $order
+ * @param object $order
  *   Drupal Commerce order object.
  *
  * @return bool
@@ -285,12 +290,12 @@ function yellowcube_client_add_order(array $ship_addr, array $yc_product, stdCla
     $yc_order->addValueAddedService(new AdditionalShippingServices($yc_product['additional']));
   }
 
-  foreach ($order->commerce_line_items['und'] as $key => $row) {
+  foreach ($order->commerce_line_items[LANGUAGE_NONE] as $key => $row) {
     $line_item = commerce_line_item_load($row['line_item_id']);
 
-    //Only submit products and skip shipping cost line item
-    if (!empty($line_item->commerce_product['und'][0]['product_id'])){
-      $product = commerce_product_load($line_item->commerce_product['und'][0]['product_id']);
+    // Only submit products and skip shipping cost line item.
+    if (!empty($line_item->commerce_product[LANGUAGE_NONE][0]['product_id'])) {
+      $product = commerce_product_load($line_item->commerce_product[LANGUAGE_NONE][0]['product_id']);
       $position = new Position();
       $position
         ->setPosNo($key + 1)

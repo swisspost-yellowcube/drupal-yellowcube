@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Cron tasks for the YellowCube module.
@@ -12,18 +13,18 @@ function yellowcube_jobs_fetch_order_updates() {
 
   $service = yellowcube_client_get_service();
 
-  //Find all pending orders
+  // Find all pending orders.
   $pending_orders = yellowcube_jobs_get_pending_orders();
 
   foreach ($pending_orders as $order_ref) {
 
-    //Load the full order object
+    // Load the full order object.
     $order = commerce_order_load($order_ref->order_id);
 
-    //Check order status
+    // Check order status.
     $response = $service->getYCCustomerOrderStatus($order_ref->yc_reference);
 
-    //Skip problematic orders
+    // Skip problematic orders.
     if ($response->isError()) {
 
       $order_link = l(
@@ -35,7 +36,7 @@ function yellowcube_jobs_fetch_order_updates() {
       );
 
       if ($response->isError()) {
-        //log failed orders
+        // Log failed orders.
         watchdog(
           'yellowcube',
           'Order @order_id could not be transferred to YellowCube. Received reference number @ref and status message “@status”.',
@@ -53,7 +54,7 @@ function yellowcube_jobs_fetch_order_updates() {
       }
     }
 
-    //find orders that have been processed
+    // Find orders that have been processed.
     if ($response->isSuccess() && !$response->isPending() && !$response->isError()) {
 
       $goodsIssueList = $service->getYCCustomerOrderReply($order->order_id);
@@ -62,20 +63,20 @@ function yellowcube_jobs_fetch_order_updates() {
         $header = $goodsIssue->getCustomerOrderHeader();
         $shipment_no = $header->getPostalShipmentNo();
 
-        //Multi packaging / shipping is not supported atm.
-        if(!empty($shipment_no)) {
-          //shipping number contains a semicolon, post api supports multiple values
+        // Multi packaging / shipping is not supported atm.
+        if (!empty($shipment_no)) {
+          // Shipping number contains a semicolon, post api supports multiple values.
           $shipping_url = 'http://www.post.ch/swisspost-tracking?formattedParcelCodes=' . $shipment_no;
           break;
         }
       }
 
-      if(!empty($goodsIssueList)) {
-        //Add a message to the order history incl. link to shipping infos
+      if (!empty($goodsIssueList)) {
+        // Add a message to the order history incl. link to shipping infos.
         $message = t('Your order has been shipped. You can use the following url for shipping tracking: !url', array('!url' => $shipping_url));
         yellowcube_jobs_add_custom_message($order, 'completed', $message);
 
-        //Update the order status to complete
+        // Update the order status to complete.
         commerce_order_status_update($order, 'complete');
       }
 
@@ -85,7 +86,7 @@ function yellowcube_jobs_fetch_order_updates() {
 }
 
 /**
- * Returns all pending orders on yellow cube
+ * Returns all pending orders on yellow cube.
  */
 function yellowcube_jobs_get_pending_orders() {
 
@@ -101,9 +102,8 @@ function yellowcube_jobs_get_pending_orders() {
   return $pending_orders;
 }
 
-
 /**
- * Returns all new orders
+ * Returns all new orders.
  */
 function yellowcube_jobs_get_new_orders() {
 
@@ -120,9 +120,8 @@ function yellowcube_jobs_get_new_orders() {
 }
 
 /**
- * Returns all pending stock items
+ * Returns all pending stock items.
  */
-
 function yellowcube_jobs_get_pending_stock($product) {
 
   $pending_stock = 0;
@@ -130,9 +129,9 @@ function yellowcube_jobs_get_pending_stock($product) {
   foreach (commerce_order_load_multiple(array(), array('status' => 'yellowcube_received'), TRUE) as $order) {
     foreach (entity_metadata_wrapper('commerce_order', $order)->commerce_line_items as $delta => $line_item_wrapper) {
       if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) {
-        //if we find a pending line item, add it to the stock
+        // If we find a pending line item, add it to the stock.
         $product_id = $line_item_wrapper->commerce_product->raw();
-        if($product_id == $product->product_id) {
+        if ($product_id == $product->product_id) {
           $pending_stock += $line_item_wrapper->quantity->value();
         }
       }
@@ -144,9 +143,8 @@ function yellowcube_jobs_get_pending_stock($product) {
 }
 
 /**
- * Add a message to the order
+ * Add a message to the order.
  */
-
 function yellowcube_jobs_add_custom_message($order, $status, $message_body) {
   $message = message_create('commerce_order_admin_comment', array('uid' => $order->uid));
   $wrapper = entity_metadata_wrapper('message', $message);
@@ -159,13 +157,16 @@ function yellowcube_jobs_add_custom_message($order, $status, $message_body) {
   $wrapper->save();
 }
 
+/**
+ *
+ */
 function yellowcube_job_submit_new_orders() {
   module_load_include('rules.inc', 'yellowcube');
   $orders = yellowcube_jobs_get_new_orders();
 
   foreach ($orders as $order) {
     $order_loaded = commerce_order_load($order->order_id);
-    yellowcube_send_order_action($order_loaded, false);
+    yellowcube_send_order_action($order_loaded, FALSE);
   }
 
 }

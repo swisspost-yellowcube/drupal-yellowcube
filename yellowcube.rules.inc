@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Rules-related code for the YellowCube module.
@@ -37,13 +38,13 @@ function yellowcube_rules_action_info() {
 /**
  * Implementation for yellowcube_update_product_action rules action.
  *
- * @param stdClass $product
+ * @param object $product
  *   Drupal Commerce product object to send to YellowCube.
  */
 function yellowcube_update_product_action($product) {
   module_load_include('client.inc', 'yellowcube');
 
-  //Skip hook in batch mode and checkout for performance reasons
+  // Skip hook in batch mode and checkout for performance reasons.
   $current_batch = batch_get();
   if (empty($current_batch) && arg(0) !== 'checkout') {
     yellowcube_client_update_product($product->sku);
@@ -53,28 +54,27 @@ function yellowcube_update_product_action($product) {
 /**
  * Implementation for yellowcube_send_order_action rules action.
  *
- * @param stdClass $order
+ * @param object $order
  *   Drupal Commerce order object to send to YellowCube.
  */
 function yellowcube_send_order_action($order, $skip_save = TRUE) {
   // Only proceed if we have a shipping address.
-  if (!empty($order->commerce_customer_shipping['und'][0]['profile_id'])) {
-    $shipping_profile = commerce_customer_profile_load($order->commerce_customer_shipping['und'][0]['profile_id']);
+  if (!empty($order->commerce_customer_shipping[LANGUAGE_NONE][0]['profile_id'])) {
+    $shipping_profile = commerce_customer_profile_load($order->commerce_customer_shipping[LANGUAGE_NONE][0]['profile_id']);
 
-    if (!empty($shipping_profile->commerce_customer_address['und'][0])) {
-      $ship_addr = $shipping_profile->commerce_customer_address['und'][0];
+    if (!empty($shipping_profile->commerce_customer_address[LANGUAGE_NONE][0])) {
+      $ship_addr = $shipping_profile->commerce_customer_address[LANGUAGE_NONE][0];
     }
   }
 
   // Loop through the line items to find the shipping service and YellowCube product.
-  $line_items = $order->commerce_line_items['und'];
+  $line_items = $order->commerce_line_items[LANGUAGE_NONE];
   foreach ($line_items as $delta => $line_item_wrapper) {
     $line_item_id = $line_item_wrapper['line_item_id'];
     $line_item = commerce_line_item_load($line_item_id);
-    //dpm($line_item);
-    if(isset($line_item->commerce_shipping_service)) {
+    if (isset($line_item->commerce_shipping_service)) {
       // This is want we need, the shipping service name.
-      $shipping_service_name = $line_item->commerce_shipping_service['und'][0]['value'];
+      $shipping_service_name = $line_item->commerce_shipping_service[LANGUAGE_NONE][0]['value'];
     }
   }
   $shipping_service = commerce_shipping_service_load($shipping_service_name);
@@ -96,5 +96,3 @@ function yellowcube_send_order_action($order, $skip_save = TRUE) {
     commerce_order_status_update($order, 'yellowcube_send_failed', $skip_save);
   }
 }
-
-

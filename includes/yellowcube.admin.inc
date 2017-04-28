@@ -1,9 +1,9 @@
 <?php
+
 /**
  * @file
  * Contains the administrative pages and form callbacks for the YellowCube module.
  */
-
 
 /**
  * Builds the form for configuring the YellowCube integration.
@@ -12,7 +12,7 @@ function yellowcube_admin_settings_form($form, &$form_state) {
 
   $form['logo'] = array(
     '#prefix' => '<div>',
-    '#markup' => theme_image(array('path' => drupal_get_path('module', 'yellowcube') . '/img/logo.jpg', 'attributes' => array())),
+    '#markup' => theme('image', array('path' => drupal_get_path('module', 'yellowcube') . '/img/logo.jpg')),
     '#suffix' => '</div>',
   );
 
@@ -63,14 +63,15 @@ function yellowcube_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('yellowcube_password', ''),
   );
 
-  // T=Test / P=Production / D=Development
+  // T=Test / P=Production / D=Development.
   $form['yellowcube_mode'] = array(
     '#type' => 'select',
     '#title' => t('Operating mode'),
     '#options' => array(
       'P' => t('Production'),
       'T' => t('Test'),
-      'D' => t('Development'), // only used during development of YC Connector
+  // Only used during development of YC Connector.
+      'D' => t('Development'),
     ),
     '#default_value' => variable_get('yellowcube_mode', 'T'),
     '#description' => t('If test mode is enabled, orders will get sent to the YellowCube test system. No actual goods will be sent.'),
@@ -90,14 +91,12 @@ function yellowcube_admin_settings_form($form, &$form_state) {
     '#default_value' => variable_get('yellowcube_status_label_received', 'YellowCube: received by YellowCube'),
   );
 
-
   $form['yellowcube_status_label_sending'] = array(
     '#type' => 'textfield',
     '#title' => t('Order status label: sending'),
     '#description' => t('The order status label for pending orders'),
     '#default_value' => variable_get('yellowcube_status_label_sending', 'YellowCube: sending to YellowCube'),
   );
-
 
   $form['yellowcube_status_label_failed'] = array(
     '#type' => 'textfield',
@@ -117,7 +116,7 @@ function yellowcube_admin_settings_form($form, &$form_state) {
     ),
     '#description' => t(
       "Log messages into !log_messages. Levels include the ones below. Default is 'error'.",
-      array('!log_messages' => l('log messages', 'admin/reports/dblog'))
+      array('!log_messages' => l(t('log messages'), 'admin/reports/dblog'))
     ),
     '#default_value' => variable_get('yellowcube_log_level', 'error'),
   );
@@ -141,7 +140,7 @@ function yellowcube_admin_settings_form_validate($form, &$form_state) {
 }
 
 /**
- * YellowCube inventory Management
+ * YellowCube inventory Management.
  */
 function yellowcube_inventory_form($form, &$form_state) {
 
@@ -149,10 +148,9 @@ function yellowcube_inventory_form($form, &$form_state) {
 
   $form['logo'] = array(
     '#prefix' => '<div>',
-    '#markup' => theme_image(array('path' => drupal_get_path('module', 'yellowcube') . '/img/logo.jpg', 'attributes' => array())),
+    '#markup' => theme('image', array('path' => drupal_get_path('module', 'yellowcube') . '/img/logo.jpg')),
     '#suffix' => '</div>',
   );
-
 
   $form['send_data'] = array(
     '#type' => 'fieldset',
@@ -201,6 +199,9 @@ function yellowcube_inventory_form($form, &$form_state) {
 
 }
 
+/**
+ *
+ */
 function yellowcube_inventory_form_submit($form, &$form_state) {
   module_load_include('client.inc', 'yellowcube');
 
@@ -210,7 +211,7 @@ function yellowcube_inventory_form_submit($form, &$form_state) {
   }
 
   if ($form_state['clicked_button']['#name'] == 'send_data') {
-    //create a batch operation
+    // Create a batch operation.
     $batch = yellowcube_batch_send_data();
     batch_set($batch);
   }
