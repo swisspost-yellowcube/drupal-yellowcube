@@ -6,16 +6,14 @@
  */
 
 // Load the yellowcube-php via the autoload script provided by composer or composer manager.
-if (file_exists('vendor/autoload.php')) {
-  require 'vendor/autoload.php';
+$localAutoloader = __DIR__ . '/vendor/autoload.php';
+if (file_exists($localAutoloader)) {
+    require $localAutoloader;
 }
 else {
-  composer_manager_register_autoloader();
+    composer_manager_register_autoloader();
 }
 
-use YellowCube\Util\Logger\WatchdogLogger;
-use YellowCube\Service;
-use YellowCube\Config;
 use YellowCube\ART\Article;
 use YellowCube\ART\ChangeFlag;
 use YellowCube\ART\UnitsOfMeasure\ISO;
@@ -32,16 +30,16 @@ use YellowCube\WAB\Position;
  * @return \YellowCube\Config
  */
 function yellowcube_client_get_config() {
-  $cert_path = variable_get('yellowcube_certificate', '');
-
-  $config = new Config(
+  $config = new YellowCube\Config(
     variable_get('yellowcube_sender', ''),
     variable_get('yellowcube_endpoint', ''),
     NULL,
     variable_get('yellowcube_mode', 'T')
   );
 
-  // Certificate handling.
+  $cert_path = variable_get('yellowcube_certificate', '');
+
+  //Certificate handling
   if (!empty($cert_path)) {
     $config->setCertificateFilePath($cert_path, variable_get('yellowcube_password'));
   }
@@ -50,16 +48,50 @@ function yellowcube_client_get_config() {
 }
 
 /**
+ * Returns true if the connection to YellowCube succeeds for the given config.
+ *
+ * @param array $credentials
+ * @return bool True if connection succeeds, false otherwise.
+ */
+function yellowcube_client_validate_connection(array $credentials) {
+  $config = new YellowCube\Config(
+    $credentials['yellowcube_sender'],
+    $credentials['yellowcube_endpoint'],
+    null,
+    $credentials['yellowcube_mode']
+  );
+
+  if (!empty($credentials['yellowcube_certificate'])) {
+    $config->setCertificateFilePath($credentials['yellowcube_certificate'], $credentials['yellowcube_password']);
+  }
+
+  try {
+    $service = new YellowCube\Service($config);
+
+    // A array response means that the connection worked and there is a result.
+    return is_array($service->getInventory());
+  } catch(Exception $e)  {
+  }
+
+  return false;
+}
+
+/**
  * Helper function to instantiate the yellowcube-php service object.
  *
  * @return YellowCube\Service
  */
 function yellowcube_client_get_service() {
-  $service = new Service(yellowcube_client_get_config());
-
+  $service = new YellowCube\Service(yellowcube_client_get_config());
   $minLogLevel = variable_get('yellowcube_log_level', '');
+
   if (!empty($minLogLevel)) {
-    $service->setLogger(new WatchdogLogger('yellowcube', $minLogLevel));
+    $logger = new \YellowCube\Util\Logger\WatchdogLogger(
+      $minLogLevel,
+      new YellowCubeWatchdogLogger('yellowcube')
+    );
+
+    $service->setLogger($logger);
   }
 
   return $service;
@@ -277,7 +309,11 @@ function yellowcube_client_add_order(array $ship_addr, array $yc_product, stdCla
     ->setZIPCode($ship_addr['postal_code'])
     ->setCity($ship_addr['locality'])
     ->setEmail($order->mail)
-    ->setLanguageCode($GLOBALS['language']->language);
+    // A user is created for each (anonymous) order. Get the language of that user.
+    // (The language property contains a ISO language code).
+    // If there is no language configured, this returns en (english).
+    ->setLanguageCode(user_preferred_language($order->uid)->language);
+
 
   $yc_order = new Order();
   $yc_order

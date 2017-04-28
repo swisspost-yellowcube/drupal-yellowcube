@@ -137,6 +137,15 @@ function yellowcube_admin_settings_form_validate($form, &$form_state) {
   if (!empty($form_state['values']['yellowcube_certificate']) && !file_exists($form_state['values']['yellowcube_certificate'])) {
     form_set_error('yellowcube_certificate', t('The certificate provided does not exist.'));
   }
+
+  module_load_include('client.inc', 'yellowcube');
+
+  if (yellowcube_client_validate_connection($form_state['values'])) {
+    drupal_set_message(t('Connection to YellowCube successful.'));
+  }
+  else {
+    form_set_error('', t('Could not connect to YellowCube service.'));
+  }
 }
 
 /**
