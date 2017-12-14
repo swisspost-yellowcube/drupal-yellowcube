@@ -17,6 +17,7 @@ else {
 use YellowCube\ART\Article;
 use YellowCube\ART\ChangeFlag;
 use YellowCube\ART\UnitsOfMeasure\ISO;
+use YellowCube\Util\Logger\MinLevelFilterLogger;
 use YellowCube\WAB\AdditionalService\AdditionalShippingServices;
 use YellowCube\WAB\AdditionalService\BasicShippingServices;
 use YellowCube\WAB\Order;
@@ -86,7 +87,7 @@ function yellowcube_client_get_service() {
   $minLogLevel = variable_get('yellowcube_log_level', '');
 
   if (!empty($minLogLevel)) {
-    $logger = new \YellowCube\Util\Logger\WatchdogLogger(
+    $logger = new MinLevelFilterLogger(
       $minLogLevel,
       new YellowCubeWatchdogLogger('yellowcube')
     );
