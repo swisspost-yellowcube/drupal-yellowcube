@@ -125,26 +125,58 @@ function yellowcube_admin_settings_form($form, &$form_state) {
 }
 
 /**
+ * Validates whether a given value is a 10-digit number.
+ *
+ * @param string $value
+ *   The string value to validate.
+ *
+ * @return bool
+ *   Returns TRUE if the given value is a 10-digit number. Otherwise, FALSE.
+ */
+function yellowcube_admin_validate_ten_digit_number($value) {
+  return (bool) preg_match('/^\d{10}$/', $value);
+}
+
+/**
  * Validates yellowcube_admin_settings_form().
  */
 function yellowcube_admin_settings_form_validate($form, &$form_state) {
-  // Ensure the certificate is set if the mode is production.
-  if ($form_state['values']['yellowcube_mode'] === 'P' && empty($form_state['values']['yellowcube_certificate'])) {
-    form_set_error('yellowcube_certificate', t('When using the production mode you have to configure a certificate.'));
+  // Ensure the sender contains less than 10 characters and the first upper case
+  // character.
+  if (!preg_match('/^(([A-Z0-9]{1}[a-z0-9]{1,9})|(YCTest)|(Yctest)|(YELLOWCUBE)|(LOGOS))$/', $form_state['values']['yellowcube_sender'])) {
+    form_set_error('yellowcube_sender', t('The YellowCube sender may not be greater than 10 characters. Only the first letter should be capitalized. E.g. "Tradeshop".'));
+  }
+
+  // Ensure the depositor number is a 10-digit number.
+  if (!yellowcube_admin_validate_ten_digit_number($form_state['values']['yellowcube_depositor'])) {
+    form_set_error('yellowcube_depositor', t('The YellowCube depositor number should be a 10-digit number. E.g. "0000054321".'));
+  }
+
+  // Ensure the partner number is a 10-digit number.
+  if (!yellowcube_admin_validate_ten_digit_number($form_state['values']['yellowcube_partner'])) {
+    form_set_error('yellowcube_partner', t('The YellowCube partner number should be a 10-digit number. E.g. "0000300200".'));
+  }
+
+  // Ensure the plant ID is a 4 characters long.
+  if (!preg_match('/^\w{4}$/', $form_state['values']['yellowcube_plant'])) {
+    form_set_error('yellowcube_plant', t('The YellowCube plant ID should be 4 characters long. E.g. "Y004".'));
   }
 
   // Ensure the certificate file exists if it is set.
   if (!empty($form_state['values']['yellowcube_certificate']) && !file_exists($form_state['values']['yellowcube_certificate'])) {
-    form_set_error('yellowcube_certificate', t('The certificate provided does not exist.'));
+    form_set_error('yellowcube_certificate', t('The provided certificate does not exist.'));
   }
 
-  module_load_include('client.inc', 'yellowcube');
+  // Try to connect to YellowCube in case there are no validation errors.
+  if (empty(form_get_errors())) {
+    module_load_include('client.inc', 'yellowcube');
 
-  if (yellowcube_client_validate_connection($form_state['values'])) {
-    drupal_set_message(t('Connection to YellowCube successful.'));
-  }
-  else {
-    form_set_error('', t('Could not connect to YellowCube service.'));
+    if (yellowcube_client_validate_connection($form_state['values'])) {
+      drupal_set_message(t('Connection to YellowCube successful.'));
+    }
+    else {
+      form_set_error('', t('Could not connect to YellowCube service.'));
+    }
   }
 }
 
