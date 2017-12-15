@@ -120,8 +120,24 @@ function yellowcube_admin_settings_form($form, &$form_state) {
     ),
     '#default_value' => variable_get('yellowcube_log_level', 'error'),
   );
+  $form = system_settings_form($form);
 
-  return system_settings_form($form);
+  // Add "Test connection" button to validate credentials.
+  $form['actions']['connect'] = array(
+    '#type' => 'submit',
+    '#value' => t('Test connection'),
+    '#submit' => array('_yellowcube_admin_test_connection'),
+  );
+
+  return $form;
+}
+
+/**
+ * Submit function for "Test connection" button in the configuration form.
+ */
+function _yellowcube_admin_test_connection(array $form, array &$form_state) {
+  // Do nothing as the submit callback will trigger configuration form
+  // validation and test connection credentials.
 }
 
 /**
