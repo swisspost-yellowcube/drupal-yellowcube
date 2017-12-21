@@ -100,6 +100,7 @@ function yellowcube_shipping_service_form($form, &$form_state, $shipping_service
  * Returns the detail form.
  *
  * @return array
+ *   The form array.
  *
  * @throws \InvalidArgumentException
  *   If no method is given.
@@ -112,6 +113,7 @@ function yellowcube_shipping_service_method_callback($form, &$form_state) {
  * Add new form.
  *
  * @return array
+ *   The form array.
  */
 function yellowcube_shipping_service_add_new_form($form, &$form_state) {
   $shipping_service = $form_state['shipping_service'];
@@ -183,6 +185,7 @@ function yellowcube_shipping_service_add_new_form($form, &$form_state) {
  * Use existing form.
  *
  * @return array
+ *   The form array.
  */
 function yellowcube_shipping_service_use_existing_form($form, &$form_state) {
   $shipping_service = $form_state['shipping_service'];
@@ -212,7 +215,8 @@ function yellowcube_shipping_service_form_validate($form, &$form_state) {
     form_set_error('detail][amount', t('You must enter a numeric value for the rate amount.'));
   }
   else {
-    // Convert the decimal amount value entered to an integer based amount value.
+    // Convert the decimal amount value entered to an integer based amount
+    // value.
     $amount = commerce_currency_decimal_to_amount($form_state['values']['detail']['amount'], $form_state['values']['detail']['currency_code']);
     form_set_value($form['detail']['amount'], $amount, $form_state);
   }
@@ -237,7 +241,7 @@ function yellowcube_shipping_service_form_submit($form, &$form_state) {
       break;
 
     case YELLOWCUBE_SHIPPING_ADD_NEW:
-      foreach (array('name', 'title', 'display_title', 'amount', 'currency_code') as $key) {
+      foreach (['name', 'title', 'display_title', 'amount', 'currency_code'] as $key) {
         $shipping_service[$key] = $form_state['values']['detail'][$key];
       }
       break;
@@ -269,8 +273,11 @@ function yellowcube_shipping_service_form_delete_submit($form, &$form_state) {
 /**
  * Displays the edit form for an existing shipping service.
  *
- * @param $name
+ * @param string $name
  *   The machine-name of the shipping service to edit.
+ *
+ * @return array|mixed
+ *   The form array.
  */
 function yellowcube_shipping_service_edit_page($name) {
   return drupal_get_form('yellowcube_shipping_service_form', commerce_shipping_service_load($name));
@@ -311,8 +318,11 @@ function yellowcube_shipping_service_delete_form_submit($form, &$form_state) {
 /**
  * Displays the delete confirmation form for an existing shipping service.
  *
- * @param $name
+ * @param string $name
  *   The machine-name of the shipping service to delete.
+ *
+ * @return array
+ *   The form array.
  */
 function yellowcube_shipping_service_delete_page($name) {
   return drupal_get_form('yellowcube_shipping_service_delete_form', commerce_shipping_service_load($name));

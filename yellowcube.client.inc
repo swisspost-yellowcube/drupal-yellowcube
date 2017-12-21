@@ -5,15 +5,18 @@
  * Glue code for interacting with the yellowcube-php library.
  */
 
-// Load the yellowcube-php via the autoload script provided by composer or composer manager.
+// Load the yellowcube-php via the autoload script provided by composer or
+// composer manager.
 $localAutoloader = __DIR__ . '/vendor/autoload.php';
 if (file_exists($localAutoloader)) {
-    require $localAutoloader;
+  include $localAutoloader;
 }
 else {
-    composer_manager_register_autoloader();
+  composer_manager_register_autoloader();
 }
 
+use YellowCube\Service;
+use YellowCube\Config;
 use YellowCube\ART\Article;
 use YellowCube\ART\ChangeFlag;
 use YellowCube\ART\UnitsOfMeasure\ISO;
@@ -29,18 +32,19 @@ use YellowCube\WAB\Position;
  * Generate the config object for the YellowCube\Service object.
  *
  * @return \YellowCube\Config
+ *   The configuration object.
  */
 function yellowcube_client_get_config() {
-  $config = new YellowCube\Config(
-    variable_get('yellowcube_sender', ''),
-    variable_get('yellowcube_endpoint', ''),
-    NULL,
-    variable_get('yellowcube_mode', 'T')
-  );
+  $config = new Config(
+        variable_get('yellowcube_sender', ''),
+        variable_get('yellowcube_endpoint', ''),
+        NULL,
+        variable_get('yellowcube_mode', 'T')
+    );
 
   $cert_path = variable_get('yellowcube_certificate', '');
 
-  //Certificate handling
+  // Certificate handling.
   if (!empty($cert_path)) {
     $config->setCertificateFilePath($cert_path, variable_get('yellowcube_password'));
   }
@@ -52,44 +56,49 @@ function yellowcube_client_get_config() {
  * Returns true if the connection to YellowCube succeeds for the given config.
  *
  * @param array $credentials
- * @return bool True if connection succeeds, false otherwise.
+ *   An array of credentials.
+ *
+ * @return bool
+ *   True if connection succeeds, false otherwise.
  */
 function yellowcube_client_validate_connection(array $credentials) {
-  $config = new YellowCube\Config(
-    $credentials['yellowcube_sender'],
-    $credentials['yellowcube_endpoint'],
-    null,
-    $credentials['yellowcube_mode']
-  );
+  $config = new Config(
+        $credentials['yellowcube_sender'],
+        $credentials['yellowcube_endpoint'],
+        NULL,
+        $credentials['yellowcube_mode']
+    );
 
   if (!empty($credentials['yellowcube_certificate'])) {
     $config->setCertificateFilePath($credentials['yellowcube_certificate'], $credentials['yellowcube_password']);
   }
 
   try {
-    $service = new YellowCube\Service($config);
+    $service = new Service($config);
 
     // A array response means that the connection worked and there is a result.
     return is_array($service->getInventory());
-  } catch(Exception $e)  {
+  }
+  catch (Exception $e) {
   }
 
-  return false;
+  return FALSE;
 }
 
 /**
  * Helper function to instantiate the yellowcube-php service object.
  *
  * @return YellowCube\Service
+ *   The YellowCube service.
  */
 function yellowcube_client_get_service() {
-  $service = new YellowCube\Service(yellowcube_client_get_config());
+  $service = new Service(yellowcube_client_get_config());
   $minLogLevel = variable_get('yellowcube_log_level', '');
 
   if (!empty($minLogLevel)) {
     $logger = new MinLevelFilterLogger(
-      $minLogLevel,
-      new YellowCubeWatchdogLogger('yellowcube')
+        $minLogLevel,
+        new YellowCubeWatchdogLogger('yellowcube')
     );
 
     $service->setLogger($logger);
@@ -187,37 +196,37 @@ function yellowcube_client_update_product($sku) {
   $response = yellowcube_client_get_service()->insertArticleMasterData($article);
 
   $product_link = l(
-    t('view'),
-    'admin/commerce/products/' . $product->product_id,
-    array(
-      'query' => array('destination' => 'admin/reports/dblog'),
-    )
-  );
+        t('view'),
+        'admin/commerce/products/' . $product->product_id,
+        array(
+          'query' => array('destination' => 'admin/reports/dblog'),
+        )
+    );
 
   if ($response->isSuccess()) {
     watchdog(
-      'yellowcube',
-      'Product @sku was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.',
-      array(
-        '@sku' => $response->getReference1(),
-        '@ref' => $response->getReference(),
-        '@status' => $response->getStatusText(),
-      ),
-      WATCHDOG_NOTICE,
-      $product_link
+        'yellowcube',
+        'Product @sku was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.',
+        array(
+          '@sku' => $response->getReference1(),
+          '@ref' => $response->getReference(),
+          '@status' => $response->getStatusText(),
+        ),
+        WATCHDOG_NOTICE,
+        $product_link
     );
 
     $current_batch = batch_get();
     if (empty($current_batch)) {
       drupal_set_message(
-        t(
+      t(
           'Product @sku was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.',
           array(
             '@sku' => $response->getReference1(),
             '@ref' => $response->getReference(),
             '@status' => $response->getStatusText(),
           )
-        )
+      )
       );
     }
 
@@ -225,14 +234,14 @@ function yellowcube_client_update_product($sku) {
   }
   else {
     watchdog(
-      'yellowcube',
-      'Product @sku could not be transmitted to YellowCube: “@status”.',
-      array(
-        '@sku' => $response->getReference1(),
-        '@status' => $response->getStatusText(),
-      ),
-      WATCHDOG_ERROR,
-      $product_link
+        'yellowcube',
+        'Product @sku could not be transmitted to YellowCube: “@status”.',
+        array(
+          '@sku' => $response->getReference1(),
+          '@status' => $response->getStatusText(),
+        ),
+        WATCHDOG_ERROR,
+        $product_link
     );
 
     return FALSE;
@@ -240,14 +249,18 @@ function yellowcube_client_update_product($sku) {
 }
 
 /**
- * Returns a partner reference in format "FL-PLZ (customer no)", e.g. PM-8004 (33).
+ * Returns a partner reference in format "FL-PLZ (customer no)".
+ *
+ * Example: PM-8004 (33).
  *
  * FL = first name, last name
  * PLZ = postal code.
  *
  * @param array $ship_addr
+ *   A shipping address.
  *
- * @return string Partner reference.
+ * @return string
+ *   Partner reference.
  */
 function yellowcube_client_get_partner_reference(array $ship_addr, stdClass $order) {
   $partner_reference = yellowcube_client_name_initials($ship_addr);
@@ -267,8 +280,10 @@ function yellowcube_client_get_partner_reference(array $ship_addr, stdClass $ord
  * Returns the initials of the name in the shipping address.
  *
  * @param array $ship_addr
+ *   A shipping address.
  *
- * @return string Uppercase initials, e.g. PM.
+ * @return string
+ *   Uppercase initials, e.g. PM.
  */
 function yellowcube_client_name_initials(array $ship_addr) {
   $initials = array();
@@ -281,7 +296,7 @@ function yellowcube_client_name_initials(array $ship_addr) {
     }
   }
 
-  return strtoupper(join('', $initials));
+  return strtoupper(implode('', $initials));
 }
 
 /**
@@ -310,11 +325,11 @@ function yellowcube_client_add_order(array $ship_addr, array $yc_product, stdCla
     ->setZIPCode($ship_addr['postal_code'])
     ->setCity($ship_addr['locality'])
     ->setEmail($order->mail)
-    // A user is created for each (anonymous) order. Get the language of that user.
+    // A user is created for each (anonymous) order. Get the language of that
+    // user.
     // (The language property contains a ISO language code).
     // If there is no language configured, this returns en (english).
     ->setLanguageCode(user_preferred_language($order->uid)->language);
-
 
   $yc_order = new Order();
   $yc_order
@@ -349,45 +364,46 @@ function yellowcube_client_add_order(array $ship_addr, array $yc_product, stdCla
   $response = yellowcube_client_get_service()->createYCCustomerOrder($yc_order);
 
   $order_link = l(
-    t('view'),
-    'admin/commerce/orders/' . $order->order_id,
-    array(
-      'query' => array('destination' => 'admin/reports/dblog'),
-    )
-  );
+        t('view'),
+        'admin/commerce/orders/' . $order->order_id,
+        array(
+          'query' => array('destination' => 'admin/reports/dblog'),
+        )
+    );
 
   if ($response->isSuccess()) {
     watchdog(
-      'yellowcube',
-      'Order #@num was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.',
-      array(
-        '@num' => $order->order_number,
-        '@ref' => $response->getReference(),
-        '@status' => $response->getStatusText(),
-      ),
-      WATCHDOG_NOTICE,
-      $order_link
+        'yellowcube',
+        'Order #@num was successfully transmitted to YellowCube. Received reference number @ref and status message “@status”.',
+        array(
+          '@num' => $order->order_number,
+          '@ref' => $response->getReference(),
+          '@status' => $response->getStatusText(),
+        ),
+        WATCHDOG_NOTICE,
+        $order_link
     );
 
     db_merge('yellowcube_order')
       ->key(array('order_id' => $order->order_id))
-      ->fields(array(
-        'yc_reference' => $response->getReference(),
-      )
-    )->execute();
+      ->fields(
+          array(
+            'yc_reference' => $response->getReference(),
+          )
+      )->execute();
 
     return TRUE;
   }
   else {
     watchdog(
-      'yellowcube',
-      'Order #@num could not be transmitted to YellowCube: “@status”.',
-      array(
-        '@num' => $order->order_number,
-        '@status' => $response->getStatusText(),
-      ),
-      WATCHDOG_ERROR,
-      $order_link
+        'yellowcube',
+        'Order #@num could not be transmitted to YellowCube: “@status”.',
+        array(
+          '@num' => $order->order_number,
+          '@status' => $response->getStatusText(),
+        ),
+        WATCHDOG_ERROR,
+        $order_link
     );
 
     return FALSE;

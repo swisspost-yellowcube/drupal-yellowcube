@@ -98,6 +98,7 @@ function yellowcube_commerce_shipping_method_info() {
  *   Optional product name to get only one result.
  *
  * @return array
+ *   All or one YellowCube products.
  */
 function yellowcube_commerce_products($name = NULL) {
   $products = array(
@@ -174,6 +175,7 @@ function yellowcube_commerce_products($name = NULL) {
  * Returns a list of all product titles keyed by their name.
  *
  * @return array
+ *   The list of all product titles keyed by their name.
  */
 function yellowcube_shipping_service_product_titles() {
   $options = array();
@@ -206,11 +208,13 @@ function yellowcube_commerce_shipping_service_new() {
 /**
  * Returns a YellowCube product for given shipping service.
  *
- * @param $shipping_service
+ * @param array $shipping_service
+ *   The shipping service information.
  *
  * @return array
+ *   All or one YellowCube products.
  */
-function yellowcube_commerce_product_for_shipping_service($shipping_service) {
+function yellowcube_commerce_product_for_shipping_service(array $shipping_service) {
   if (!empty($shipping_service['product'])) {
     return yellowcube_commerce_products($shipping_service['product']);
   }
@@ -296,12 +300,16 @@ function yellowcube_commerce_shipping_service_info() {
 /**
  * Saves or updates a shipping service.
  *
- * @param $shipping_service
+ * @param array $shipping_service
+ *   A shipping service information.
  * @param bool $skip_reset
+ *   Clear the necessary caches and rebuild the menu items.
  *
  * @return bool|int
+ *   If the record insert or update failed, returns FALSE. If it succeeded,
+ *   returns SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
  */
-function yellowcube_shipping_service_save($shipping_service, $skip_reset = FALSE) {
+function yellowcube_shipping_service_save(array $shipping_service, $skip_reset = FALSE) {
   // Move the amount and currency code up a level in the service array.
   if (!empty($shipping_service['base_rate'])) {
     $shipping_service['amount'] = $shipping_service['base_rate']['amount'];
@@ -324,9 +332,9 @@ function yellowcube_shipping_service_save($shipping_service, $skip_reset = FALSE
 /**
  * Deletes a flat rate service.
  *
- * @param $name
+ * @param string $name
  *   The machine-name of the flat rate service.
- * @param $skip_reset
+ * @param bool $skip_reset
  *   Boolean indicating whether or not this delete should result in shipping
  *   services being reset and the menu being rebuilt; defaults to FALSE. This is
  *   useful when you intend to perform many deletions at once, as menu
@@ -547,7 +555,8 @@ function yellowcube_batch_operation_update_stock($stock_item, &$context) {
     $product = commerce_product_load_by_sku($article_no);
 
     if ($product) {
-      // Check pending stock items and subtract them, because yellowcube is not yet up-to-date.
+      // Check pending stock items and subtract them, because yellowcube is not
+      // yet up-to-date.
       $pending_stock = yellowcube_jobs_get_pending_stock($product);
       yellowcube_stock_adjust($product, $stock_item['qty'] - $pending_stock);
     }

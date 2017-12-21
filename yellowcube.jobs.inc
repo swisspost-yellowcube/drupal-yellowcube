@@ -65,7 +65,8 @@ function yellowcube_jobs_fetch_order_updates() {
 
         // Multi packaging / shipping is not supported atm.
         if (!empty($shipment_no)) {
-          // Shipping number contains a semicolon, post api supports multiple values.
+          // Shipping number contains a semicolon, post api supports multiple
+          // values.
           $shipping_url = 'http://www.post.ch/swisspost-tracking?formattedParcelCodes=' . $shipment_no;
           break;
         }
@@ -127,7 +128,7 @@ function yellowcube_jobs_get_pending_stock($product) {
   $pending_stock = 0;
 
   foreach (commerce_order_load_multiple(array(), array('status' => 'yellowcube_received'), TRUE) as $order) {
-    foreach (entity_metadata_wrapper('commerce_order', $order)->commerce_line_items as $delta => $line_item_wrapper) {
+    foreach (entity_metadata_wrapper('commerce_order', $order)->commerce_line_items as $line_item_wrapper) {
       if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) {
         // If we find a pending line item, add it to the stock.
         $product_id = $line_item_wrapper->commerce_product->raw();
@@ -158,7 +159,7 @@ function yellowcube_jobs_add_custom_message($order, $status, $message_body) {
 }
 
 /**
- *
+ * Submits new YellowCube orders.
  */
 function yellowcube_job_submit_new_orders() {
   module_load_include('rules.inc', 'yellowcube');

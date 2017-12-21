@@ -67,9 +67,10 @@ function yellowcube_send_order_action($order, $skip_save = TRUE) {
     }
   }
 
-  // Loop through the line items to find the shipping service and YellowCube product.
+  // Loop through the line items to find the shipping service and YellowCube
+  // product.
   $line_items = $order->commerce_line_items[LANGUAGE_NONE];
-  foreach ($line_items as $delta => $line_item_wrapper) {
+  foreach ($line_items as $line_item_wrapper) {
     $line_item_id = $line_item_wrapper['line_item_id'];
     $line_item = commerce_line_item_load($line_item_id);
     if (isset($line_item->commerce_shipping_service)) {
@@ -80,7 +81,8 @@ function yellowcube_send_order_action($order, $skip_save = TRUE) {
   $shipping_service = commerce_shipping_service_load($shipping_service_name);
   $yc_product = yellowcube_commerce_product_for_shipping_service($shipping_service);
 
-  // If we couldn't find the required information in the order data, bail out now.
+  // If we couldn't find the required information in the order data, bail out
+  // now.
   if (empty($ship_addr) || empty($yc_product)) {
     return;
   }

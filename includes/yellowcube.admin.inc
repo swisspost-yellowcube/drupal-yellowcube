@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains the administrative pages and form callbacks for the YellowCube module.
+ * Administrative pages and form callbacks for the YellowCube module.
  */
 
 /**
@@ -257,7 +257,7 @@ function yellowcube_inventory_form($form, &$form_state) {
 }
 
 /**
- *
+ * Submit handler for "Get current stock data" button.
  */
 function yellowcube_inventory_form_submit($form, &$form_state) {
   module_load_include('client.inc', 'yellowcube');
